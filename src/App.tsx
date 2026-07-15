@@ -92,16 +92,20 @@ export default function App() {
         try {
           // Attempt reverse geocoding via OpenStreetMap Nominatim
           const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10`
+            `https://nominatim.openstreetmap.org/reverse?format=json&addressdetails=1&lat=${lat}&lon=${lng}&zoom=10`
           );
           if (response.ok) {
             const data = await response.json();
-            const cityName = data.address.city || data.address.town || data.address.suburb || data.address.state || "Current GPS Location";
-            const countryName = data.address.country || "";
-            const fullName = `${cityName}${countryName ? ', ' + countryName : ''} (GPS)`;
+            const address = data.address || {};
+            const city = address.city || address.town || address.village || address.suburb || address.hamlet || address.municipality || "";
+            const state = address.state || address.province || address.region || "";
+            const country = address.country || "";
+            const fullName = [city, state, country]
+              .filter(part => part.trim().length > 0)
+              .join(', ');
             
             const gpsCity: City = {
-              name: fullName,
+              name: fullName || `GPS Location (${lat.toFixed(2)}, ${lng.toFixed(2)})`,
               lat,
               lng,
               timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -155,15 +159,22 @@ export default function App() {
       setIsSearching(true);
       try {
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&limit=5`
+          `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(val)}&limit=5`
         );
         if (response.ok) {
           const data = await response.json();
           const apiCities: City[] = data.map((item: any) => {
             const lat = parseFloat(item.lat);
             const lon = parseFloat(item.lon);
+            const address = item.address || {};
+            const city = address.city || address.town || address.village || address.suburb || address.hamlet || address.municipality || "";
+            const state = address.state || address.province || address.region || "";
+            const country = address.country || "";
+            const formattedName = [city, state, country]
+              .filter(part => part.trim().length > 0)
+              .join(', ');
             return {
-              name: item.display_name.split(',').slice(0, 3).join(','),
+              name: formattedName || item.display_name.split(',').slice(0, 3).join(','),
               lat,
               lng: lon,
               timezone: getTimezoneFromCoords(lat, lon)
@@ -234,7 +245,7 @@ export default function App() {
       setIsSearching(true);
       try {
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationQuery)}&limit=1`
+          `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(locationQuery)}&limit=1`
         );
         if (response.ok) {
           const data = await response.json();
@@ -259,8 +270,16 @@ export default function App() {
               console.error("TimeAPI lookup failed during submit geocoding: ", tzErr);
             }
 
+            const address = first.address || {};
+            const city = address.city || address.town || address.village || address.suburb || address.hamlet || address.municipality || "";
+            const state = address.state || address.province || address.region || "";
+            const country = address.country || "";
+            const formattedName = [city, state, country]
+              .filter(part => part.trim().length > 0)
+              .join(', ');
+
             const resolvedCity: City = {
-              name: first.display_name.split(',').slice(0, 3).join(','),
+              name: formattedName || first.display_name.split(',').slice(0, 3).join(','),
               lat,
               lng: lon,
               timezone
