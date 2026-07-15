@@ -46,12 +46,13 @@ export default function App() {
   const [calculations, setCalculations] = useState<DayCalculations | null>(null);
   const [weeklyKalams, setWeeklyKalams] = useState<any[]>([]);
 
-  // Detailed Modal state
   const [selectedKalam, setSelectedKalam] = useState<KalamPeriod | null>(null);
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
 
 
 
-  // References for dropdown click-outs
+  // References for dashboard header and suggestions dropdown
+  const headerRef = useRef<HTMLDivElement>(null);
   const suggestionsRef = useRef<HTMLUListElement>(null);
 
   // Close suggestions on click outside
@@ -76,6 +77,32 @@ export default function App() {
       setWeeklyKalams(weekly);
     }
   }, [selectedCity, selectedDateStr]);
+
+  // Window scroll listener for header collapse using CSS variables for high performance
+  useEffect(() => {
+    if (screen !== 'dashboard') {
+      setIsHeaderCollapsed(false);
+      return;
+    }
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const progress = Math.min(scrollY / 120, 1); // transition range: 0px to 120px
+      
+      if (headerRef.current) {
+        headerRef.current.style.setProperty('--scroll-progress', progress.toString());
+        if (progress >= 1) {
+          headerRef.current.classList.add('collapsed');
+          setIsHeaderCollapsed(true);
+        } else {
+          headerRef.current.classList.remove('collapsed');
+          setIsHeaderCollapsed(false);
+        }
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Initial call
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [screen]);
 
   // Handle Geolocation API
   const detectLocation = () => {
@@ -386,29 +413,7 @@ export default function App() {
 
   return (
     <div className="app-container">
-      {/* Header (visible on dashboard screen) */}
-      {screen === 'dashboard' && (
-        <header className="app-header">
-          <button className="header-btn" aria-label="Menu" onClick={() => setScreen('welcome')}>
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          
-          <div className="logo-container">
-            <svg viewBox="0 0 100 100" className="app-logo-mark" fill="none" strokeWidth="2.5">
-              <path d="M50,15 C45,35 30,45 30,55 C30,67 39,75 50,75 C61,75 70,67 70,55 C70,45 55,35 50,15 Z" />
-              <path d="M50,15 C55,35 70,45 70,55 C70,67 61,75 50,75" strokeDasharray="2,2" />
-              <circle cx="50" cy="55" r="8" strokeWidth="1.5" />
-              <line x1="50" y1="15" x2="50" y2="75" strokeWidth="1" strokeDasharray="1,2" />
-            </svg>
-            <h1 className="app-title-main title-serif">AakashaSutram</h1>
-            <span className="app-subtitle-main">align. awaken. ascend.</span>
-          </div>
 
-          <button className="header-btn" aria-label="Notifications" onClick={() => alert("Peaceful alignments loaded.")}>
-            <Bell className="w-5 h-5" />
-          </button>
-        </header>
-      )}
 
       {/* Screen 1: Welcome/Setup */}
       {screen === 'welcome' && (
@@ -499,11 +504,32 @@ export default function App() {
         </main>
       )}
 
-      {/* Screen 2: Dashboard */}
       {screen === 'dashboard' && calculations && (
         <main style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
           
-          {/* Date Picker Bar */}
+          <div ref={headerRef} className={`sticky-dashboard-header ${isHeaderCollapsed ? 'collapsed' : ''}`}>
+            <header className="app-header">
+              <button className="header-btn" aria-label="Menu" onClick={() => setScreen('welcome')}>
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              
+              <div className="logo-container">
+                <svg viewBox="0 0 100 100" className="app-logo-mark" fill="none" strokeWidth="2.5">
+                  <path d="M50,15 C45,35 30,45 30,55 C30,67 39,75 50,75 C61,75 70,67 70,55 C70,45 55,35 50,15 Z" />
+                  <path d="M50,15 C55,35 70,45 70,55 C70,67 61,75 50,75" strokeDasharray="2,2" />
+                  <circle cx="50" cy="55" r="8" strokeWidth="1.5" />
+                  <line x1="50" y1="15" x2="50" y2="75" strokeWidth="1" strokeDasharray="1,2" />
+                </svg>
+                <h1 className="app-title-main title-serif">AakashaSutram</h1>
+                <span className="app-subtitle-main">align. awaken. ascend.</span>
+              </div>
+
+              <button className="header-btn" aria-label="Notifications" onClick={() => alert("Peaceful alignments loaded.")}>
+                <Bell className="w-5 h-5" />
+              </button>
+            </header>
+
+            {/* Date Picker Bar */}
           <div className="date-picker-bar">
             <button className="date-nav-btn" onClick={() => shiftDate(-1)}>
               <ChevronLeft className="w-4 h-4" />
@@ -546,11 +572,13 @@ export default function App() {
           <div className="sun-cards-grid">
             {/* Sunrise Card */}
             <div className="sun-card sunrise">
-              <div className="sun-card-header">
-                <Sun className="sun-card-icon" />
-                <span className="sun-card-title">Sunrise</span>
+              <div className="sun-card-info">
+                <div className="sun-card-header">
+                  <Sun className="sun-card-icon" />
+                  <span className="sun-card-title">Sunrise</span>
+                </div>
+                <span className="sun-card-time">{formatTimeString(calculations.sunrise)}</span>
               </div>
-              <span className="sun-card-time">{formatTimeString(calculations.sunrise)}</span>
               
               {/* Arched window decoration */}
               <div className="arched-window">
@@ -603,11 +631,13 @@ export default function App() {
 
             {/* Sunset Card */}
             <div className="sun-card sunset">
-              <div className="sun-card-header">
-                <SunsetIcon className="sun-card-icon" />
-                <span className="sun-card-title">Sunset</span>
+              <div className="sun-card-info">
+                <div className="sun-card-header">
+                  <SunsetIcon className="sun-card-icon" />
+                  <span className="sun-card-title">Sunset</span>
+                </div>
+                <span className="sun-card-time">{formatTimeString(calculations.sunset)}</span>
               </div>
-              <span className="sun-card-time">{formatTimeString(calculations.sunset)}</span>
               
               {/* Arched window decoration */}
               <div className="arched-window">
@@ -655,6 +685,7 @@ export default function App() {
                 <span>Peaceful Sunset</span>
               </div>
             </div>
+          </div>
           </div>
 
           {/* Wednesday Abhijit warning notice */}
