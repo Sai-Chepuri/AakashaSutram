@@ -1,32 +1,86 @@
-# React + TypeScript + Vite
+# 🌌 AakashaSutram (आकाशसूत्रम्)
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+> **Vedic Astro-Muhurta & Daily Kalam Calculator**
 
-Currently, two official plugins are available:
+AakashaSutram is a premium, high-fidelity iOS-style web application designed to calculate daily Vedic timings (Muhurtas and Kalams) relative to a user's exact geographic coordinates. Built with a modern, soothing pastel palette and smooth micro-animations, AakashaSutram helps you align daily activities with cosmic rhythms.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## 🔮 Core Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 1. High-Precision Vedic Calculations
+- **Brahma Muhurta**: The auspicious 48-minute period starting 96 minutes before sunrise.
+- **Daytime Muhurtas**: Dynamic daylight divisions including **Pratah Kalam** (morning transition) and **Madhyahna Kalam** (midday transition).
+- **Auspicious Transitions**: Twilight transitions like **Pradosha Kalam** (evening prayers).
+- **Moon Nakshatra Alignments**: Calculations for **Amrita Kalam** (auspicious) and **Varjyam/Tyajya** (inauspicious) based on the Moon's transition through the active Nakshatra.
+- **Kaalams**: Rotating weekday-based planetary hours including **Rahu Kalam**, **Yamagandam**, and **Gulika Kalam**.
 
-## Expanding the Oxlint configuration
+### 2. Astrological Accuracy
+- **Sidereal Lahiri Ayanamsa**: Converts standard tropical coordinates to traditional Hindu sidereal positions by calculating the precession offset (~24.9° in 2026).
+- **Topocentric Lunar Parallax**: Adjusts Nakshatra calculations utilizing the observer's exact latitude and longitude coordinates to correct for lunar parallax, delivering factually accurate local timings.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+### 3. iOS-Style Premium UI/UX Interactions
+- **Autocomplete & Geolocation (GPS)**: Integrated Nominatim geocoding and TimeAPI.io timezone detection to dynamically adapt all timestamps to the destination clock time.
+- **Clean Location Display**: Structured address parsing showing only `City, State, Country` to eliminate postcode and county clutter.
+- **Fluid Scroll-Driven Header Collapse**:
+  - The header containing location, dates, and titles remains fixed (sticky) at the top of the viewport.
+  - As the user scrolls, the vector arched window illustrations and status pills shrink and fade out **pixel-by-pixel** in perfect coordination with the scroll progress.
+  - At full collapse, titles and times snap cleanly into a single compact status pill.
+  - Uses native CSS custom variables (`--scroll-progress`) updated via a React ref to maintain 60fps/120fps scrolling.
+- **Unified Muhurtas Table**: Merges daily divisions and Kaalams into one table, sorted by spiritual status (Auspicious ➜ Neutral ➜ Inauspicious) and divided by clean, lavender column lines.
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+---
+
+## 📸 Screenshots
+
+### Welcome & Setup
+![Welcome Screen](docs/screenshots/welcome.jpg)
+
+### Astro Dashboard & Muhurtas
+![Dashboard Screen](docs/screenshots/dashboard.jpg)
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js (version 18 or higher recommended)
+- npm or yarn
+
+### Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/AakashaSutram.git
+   cd AakashaSutram
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+4. Build for production:
+   ```bash
+   npm run build
+   ```
+
+---
+
+## 🧪 Testing
+
+AakashaSutram features a complete test suite powered by **Vitest** and **React Testing Library** to validate calculations and UI flows.
+
+Run the test suite:
+```bash
+npm run test
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+### Coverage
+- **Cities Suite (`src/utils/cities.test.ts`)**: Validates offline approximation zone lookups.
+- **Engine Suite (`src/utils/kalamCalculator.test.ts`)**: Validates Brahma Muhurta, Pratah, Madhyahna, and Nakshatra-based Ghati calculations.
+- **UI Flow Suite (`src/App.test.tsx`)**: Stub-mocks browser geolocation and geocoding network fetches to test suggestion lists, selections, and screen navigation.
