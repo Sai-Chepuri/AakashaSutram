@@ -49,8 +49,7 @@ export default function App() {
   // Detailed Modal state
   const [selectedKalam, setSelectedKalam] = useState<KalamPeriod | null>(null);
 
-  // Dashboard specific states
-  const [kalamTypeToggle, setKalamTypeToggle] = useState<'muhurtas' | 'kaals'>('muhurtas');
+
 
   // References for dropdown click-outs
   const suggestionsRef = useRef<HTMLUListElement>(null);
@@ -357,6 +356,21 @@ export default function App() {
   };
   const { yesterday, today, tomorrow } = getDates();
 
+  const blendedKalams = (() => {
+    if (!calculations) return [];
+    const priority: Record<string, number> = {
+      auspicious: 1,
+      neutral: 2,
+      inauspicious: 3
+    };
+    return [...calculations.kalams, ...weeklyKalams].sort((a, b) => {
+      const pA = priority[a.type] ?? 2;
+      const pB = priority[b.type] ?? 2;
+      if (pA !== pB) return pA - pB;
+      return a.startTime.getTime() - b.startTime.getTime();
+    });
+  })();
+
   return (
     <div className="app-container">
       {/* Header (visible on dashboard screen) */}
@@ -648,20 +662,9 @@ export default function App() {
             </span>
           </div>
 
-          {/* Tab switcher */}
-          <div className="tabs-wrapper">
-            <button 
-              className={`tab-btn ${kalamTypeToggle === 'muhurtas' ? 'active' : ''}`}
-              onClick={() => setKalamTypeToggle('muhurtas')}
-            >
-              Daily Muhurtas
-            </button>
-            <button 
-              className={`tab-btn ${kalamTypeToggle === 'kaals' ? 'active' : ''}`}
-              onClick={() => setKalamTypeToggle('kaals')}
-            >
-              Rahu Kaal & Kaals
-            </button>
+          {/* Section title bar */}
+          <div className="section-header-bar">
+            <h2 className="section-header-title font-serif">Daily Muhurtas</h2>
           </div>
 
           {/* Kalam Table Container */}
@@ -673,49 +676,25 @@ export default function App() {
             </div>
 
             <div className="kalam-rows-body">
-              {kalamTypeToggle === 'muhurtas' ? (
-                // Render the 8 standard daily Kalams from calculcations
-                calculations.kalams.map((k, idx) => (
-                  <div 
-                    key={idx} 
-                    className={`kalam-row ${
-                      k.type === 'auspicious' ? 'row-auspicious' : 
-                      k.type === 'inauspicious' ? 'row-inauspicious' : 'row-neutral'
-                    }`}
-                    onClick={() => setSelectedKalam(k)}
-                  >
-                    <div className="kalam-cell-name">
-                      <div className="kalam-icon-wrapper">
-                        {getKalamIcon(k.name)}
-                      </div>
-                      <span>{k.name}</span>
+              {blendedKalams.map((k, idx) => (
+                <div 
+                  key={idx} 
+                  className={`kalam-row ${
+                    k.type === 'auspicious' ? 'row-auspicious' : 
+                    k.type === 'inauspicious' ? 'row-inauspicious' : 'row-neutral'
+                  }`}
+                  onClick={() => setSelectedKalam(k)}
+                >
+                  <div className="kalam-cell-name">
+                    <div className="kalam-icon-wrapper">
+                      {getKalamIcon(k.name)}
                     </div>
-                    <span className="kalam-cell-time">{formatTimeString(k.startTime)}</span>
-                    <span className="kalam-cell-time">{formatTimeString(k.endTime)}</span>
+                    <span>{k.name}</span>
                   </div>
-                ))
-              ) : (
-                // Render Rahu Kaal, Yamagandam, Gulika Kaal
-                weeklyKalams.map((k, idx) => (
-                  <div 
-                    key={idx} 
-                    className={`kalam-row ${
-                      k.type === 'auspicious' ? 'row-auspicious' : 
-                      k.type === 'inauspicious' ? 'row-inauspicious' : 'row-neutral'
-                    }`}
-                    onClick={() => setSelectedKalam(k)}
-                  >
-                    <div className="kalam-cell-name">
-                      <div className="kalam-icon-wrapper">
-                        {getKalamIcon(k.name)}
-                      </div>
-                      <span>{k.name}</span>
-                    </div>
-                    <span className="kalam-cell-time">{formatTimeString(k.startTime)}</span>
-                    <span className="kalam-cell-time">{formatTimeString(k.endTime)}</span>
-                  </div>
-                ))
-              )}
+                  <span className="kalam-cell-time">{formatTimeString(k.startTime)}</span>
+                  <span className="kalam-cell-time">{formatTimeString(k.endTime)}</span>
+                </div>
+              ))}
             </div>
           </div>
         </main>
@@ -767,7 +746,7 @@ export default function App() {
 
         <div 
           className={`tab-bar-item ${activeTab === 'panchangam' ? 'active' : ''}`}
-          onClick={() => { setActiveTab('panchangam'); setScreen('dashboard'); setKalamTypeToggle('muhurtas'); }}
+          onClick={() => { setActiveTab('panchangam'); setScreen('dashboard'); }}
         >
           <svg viewBox="0 0 24 24" className="tab-bar-icon" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -789,7 +768,7 @@ export default function App() {
 
         <div 
           className={`tab-bar-item ${activeTab === 'calendar' ? 'active' : ''}`}
-          onClick={() => { setActiveTab('calendar'); setScreen('dashboard'); setKalamTypeToggle('kaals'); }}
+          onClick={() => { setActiveTab('calendar'); setScreen('dashboard'); }}
         >
           <svg viewBox="0 0 24 24" className="tab-bar-icon" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />

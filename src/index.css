@@ -603,35 +603,19 @@
     color: var(--color-terracotta);
   }
 
-  /* Tab Toggle switcher */
-  .tabs-wrapper {
-    display: flex;
-    justify-content: center;
-    margin: 0 20px 16px 20px;
-    background-color: var(--color-alabaster-dark);
-    padding: 4px;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-soft);
+  /* Section Header Bar */
+  .section-header-bar {
+    margin: 8px 20px 14px 20px;
+    border-bottom: 1px solid var(--border-soft);
+    padding-bottom: 6px;
+    text-align: left;
   }
 
-  .tab-btn {
-    flex: 1;
-    text-align: center;
-    padding: 10px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--color-muted);
-    border: none;
-    background: none;
-    cursor: pointer;
-    transition: var(--transition-smooth);
-  }
-
-  .tab-btn.active {
-    background-color: var(--color-white);
+  .section-header-title {
+    font-size: 20px;
+    font-weight: 700;
     color: var(--color-charcoal);
-    box-shadow: 0 2px 8px rgba(60, 53, 74, 0.05);
+    margin: 0;
   }
 
   /* Table styling */
