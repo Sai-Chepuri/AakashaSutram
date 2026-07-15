@@ -320,16 +320,10 @@ export default function App() {
         return <FlowerIcon className="w-4 h-4" />;
       case "Pratah Kalam":
         return <SunriseIcon className="w-4 h-4" />;
-      case "Sangava Kalam":
-        return <Sun className="w-4 h-4" />;
       case "Madhyahna Kalam":
         return <Sun className="w-4 h-4" style={{ transform: 'scale(1.2)' }} />;
-      case "Aparahna Kalam":
-        return <Sun className="w-4 h-4" style={{ opacity: 0.7 }} />;
       case "Pradosha Kalam":
         return <SunsetIcon className="w-4 h-4" />;
-      case "Nishita Kalam":
-        return <Moon className="w-4 h-4" />;
       case "Amrita Kalam":
         return <Droplet className="w-4 h-4 text-emerald-600" />;
       case "Varjyam (Tyajya)":

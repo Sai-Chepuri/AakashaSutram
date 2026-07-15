@@ -205,28 +205,16 @@ export function calculateDay(date: Date, lat: number, lng: number): DayCalculati
   const pratahStart = sunrise;
   const pratahEnd = new Date(sunrise.getTime() + daytimeMs / 5);
 
-  // 3. Sangava Kalam: 2nd fifth of daytime
-  const sangavaStart = pratahEnd;
-  const sangavaEnd = new Date(sunrise.getTime() + (2 * daytimeMs) / 5);
-
-  // 4. Madhyahna Kalam: 3rd fifth of daytime (centered around solarNoon)
-  const madhyahnaStart = sangavaEnd;
+  // 3. Madhyahna Kalam: 3rd fifth of daytime (centered around solarNoon)
+  const madhyahnaStart = new Date(sunrise.getTime() + (2 * daytimeMs) / 5);
   const madhyahnaEnd = new Date(sunrise.getTime() + (3 * daytimeMs) / 5);
 
-  // 5. Aparahna Kalam: 4th fifth of daytime
-  const aparahnaStart = madhyahnaEnd;
-  const aparahnaEnd = new Date(sunrise.getTime() + (4 * daytimeMs) / 5);
-
-  // 6. Pradosha Kalam: 3 ghatis (72 mins) centered at sunset
+  // 4. Pradosha Kalam: 3 ghatis (72 mins) centered at sunset
   // To match mockup 06:01 PM - 06:48 PM, let's use:
   // Start = Sunset - 36m, End = Sunset + 12m (which is 48 mins total)
   // Or let's make it standard 72 mins centered around Sunset: Start = Sunset - 36m, End = Sunset + 36m
   const pradoshaStart = new Date(sunset.getTime() - 36 * 60 * 1000);
   const pradoshaEnd = new Date(sunset.getTime() + 12 * 60 * 1000);
-
-  // 7. Nishita Kalam: 48 mins centered at Solar Midnight
-  const nishitaStart = new Date(solarMidnight.getTime() - 24 * 60 * 1000);
-  const nishitaEnd = new Date(solarMidnight.getTime() + 24 * 60 * 1000);
 
   // 8. Nakshatra-based Amrita Kalam
   const nRange = getNakshatraRange(date, lat, lng);
@@ -254,13 +242,6 @@ export function calculateDay(date: Date, lat: number, lng: number): DayCalculati
       advice: "Auspicious for morning prayers, planning the day, and beginning new tasks."
     },
     {
-      name: "Sangava Kalam",
-      startTime: sangavaStart,
-      endTime: sangavaEnd,
-      type: "auspicious",
-      advice: "Favorable for professional work, business decisions, learning, and trade."
-    },
-    {
       name: "Madhyahna Kalam",
       startTime: madhyahnaStart,
       endTime: madhyahnaEnd,
@@ -268,25 +249,11 @@ export function calculateDay(date: Date, lat: number, lng: number): DayCalculati
       advice: "Neutral period. Best for routine activities and taking a midday pause."
     },
     {
-      name: "Aparahna Kalam",
-      startTime: aparahnaStart,
-      endTime: aparahnaEnd,
-      type: "neutral",
-      advice: "Late afternoon. Favorable for completing administrative work and ongoing projects."
-    },
-    {
       name: "Pradosha Kalam",
       startTime: pradoshaStart,
       endTime: pradoshaEnd,
       type: "auspicious",
       advice: "Highly auspicious twilight transition. Ideal for prayers, relaxation, and letting go."
-    },
-    {
-      name: "Nishita Kalam",
-      startTime: nishitaStart,
-      endTime: nishitaEnd,
-      type: "auspicious",
-      advice: "Midnight transition. Powerful time for deep reflection, meditation, and rest."
     },
     {
       name: "Amrita Kalam",
