@@ -80,9 +80,9 @@ describe('AakashaSutram UI Integration', () => {
     // Select suggestion
     fireEvent.click(screen.getByText('New Delhi, India'));
     
-    // Click Insights
-    const insightsBtn = screen.getByText('Insights');
-    fireEvent.click(insightsBtn);
+    // Click Calculate
+    const calculateBtn = screen.getByText('Calculate');
+    fireEvent.click(calculateBtn);
 
     // Verify it transitions to Dashboard screen
     await waitFor(() => {

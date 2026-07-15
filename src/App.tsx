@@ -496,8 +496,7 @@ export default function App() {
 
               {/* Action Button */}
               <button className="primary-btn font-sans" onClick={triggerInsights}>
-                <span>Insights</span>
-                <ChevronRight className="w-4 h-4" />
+                <span>Calculate</span>
               </button>
             </div>
           </div>
