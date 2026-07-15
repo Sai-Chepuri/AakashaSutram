@@ -631,7 +631,7 @@
   .kalam-table-header {
     display: grid;
     grid-template-columns: 1.4fr 1fr 1fr;
-    padding: 14px 20px;
+    padding: 10px 0;
     background-color: var(--color-lavender-light);
     border-bottom: 1px solid var(--border-soft);
     font-size: 11px;
@@ -644,8 +644,7 @@
   .kalam-row {
     display: grid;
     grid-template-columns: 1.4fr 1fr 1fr;
-    padding: 14px 20px;
-    align-items: center;
+    padding: 12px 0;
     border-bottom: 1px solid var(--color-alabaster-dark);
     cursor: pointer;
     transition: var(--transition-smooth);
@@ -659,9 +658,40 @@
     background-color: var(--color-lavender-light);
   }
 
-  .kalam-cell-name {
+  /* Table column dividers & spacing */
+  .kalam-table-header > *,
+  .kalam-row > * {
     display: flex;
     align-items: center;
+  }
+
+  .kalam-table-header > *:not(:last-child),
+  .kalam-row > *:not(:last-child) {
+    border-right: 1px solid rgba(215, 211, 232, 0.5); /* Lighter soft lavender lines */
+  }
+
+  /* First Column */
+  .kalam-table-header > *:first-child,
+  .kalam-row > *:first-child {
+    padding-left: 20px;
+    padding-right: 12px;
+  }
+
+  /* Second Column */
+  .kalam-table-header > *:nth-child(2),
+  .kalam-row > *:nth-child(2) {
+    padding-left: 16px;
+    padding-right: 12px;
+  }
+
+  /* Third Column */
+  .kalam-table-header > *:last-child,
+  .kalam-row > *:last-child {
+    padding-left: 16px;
+    padding-right: 20px;
+  }
+
+  .kalam-cell-name {
     gap: 10px;
     font-size: 13px;
     font-weight: 600;

@@ -325,7 +325,7 @@ export function calculateWeeklyKalams(date: Date, timezone: string, sunrise: Dat
 
   return [
     {
-      name: "Rahu Kaal",
+      name: "Rahu Kalam",
       startTime: rahuRange.start,
       endTime: rahuRange.end,
       type: "inauspicious" as const,
@@ -339,7 +339,7 @@ export function calculateWeeklyKalams(date: Date, timezone: string, sunrise: Dat
       advice: "Associated with Yama. Avoid financial transactions, travel, and important rituals."
     },
     {
-      name: "Gulika Kaal",
+      name: "Gulika Kalam",
       startTime: gulikaRange.start,
       endTime: gulikaRange.end,
       type: "neutral" as const,

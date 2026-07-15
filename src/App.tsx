@@ -328,11 +328,11 @@ export default function App() {
         return <Droplet className="w-4 h-4 text-emerald-600" />;
       case "Varjyam (Tyajya)":
         return <Flame className="w-4 h-4 text-rose-500" />;
-      case "Rahu Kaal":
+      case "Rahu Kalam":
         return <Moon className="w-4 h-4" />;
       case "Yamagandam":
         return <Flame className="w-4 h-4" />;
-      case "Gulika Kaal":
+      case "Gulika Kalam":
         return <Sun className="w-4 h-4" />;
       default:
         return <Info className="w-4 h-4" />;
