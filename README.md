@@ -34,11 +34,11 @@ AakashaSutram is a premium, high-fidelity iOS-style web application designed to 
 ## 📸 Screenshots
 
 ### Welcome & Setup
-![Welcome Screen](docs/screenshots/welcome.jpg)
+![Welcome Screen](docs/screenshots/welcome.png)
 
 ### Astro Dashboard & Muhurtas
-![Dashboard Screen](docs/screenshots/dashboard.jpg)
-
+![Muhurtas_collapsed Screen](docs/screenshots/Muhurtas_collapsed.png)
+![Muhurtas_expanded Screen](docs/screenshots/Muhurtas_expanded.png)
 ---
 
 ## 🚀 Getting Started
