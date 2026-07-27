@@ -17,7 +17,15 @@ import {
   Sunrise as SunriseIcon,
   Sunset as SunsetIcon
 } from 'lucide-react';
-import { calculateDay, calculateWeeklyKalams, getNoonInTimezone } from './utils/kalamCalculator';
+import { 
+  calculateDay, 
+  calculateWeeklyKalams, 
+  getNoonInTimezone, 
+  getTeluguPanchangamForDate, 
+  getTeluguMonthStartDate, 
+  TELUGU_MONTHS, 
+  TELUGU_SAMVATSARAS 
+} from './utils/kalamCalculator';
 import type { DayCalculations, KalamPeriod } from './utils/kalamCalculator';
 import { CITIES, getTimezoneFromCoords } from './utils/cities';
 import type { City } from './utils/cities';
@@ -48,6 +56,111 @@ export default function App() {
 
   const [selectedKalam, setSelectedKalam] = useState<KalamPeriod | null>(null);
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
+
+  // Calendar States
+  const [calendarYear, setCalendarYear] = useState<number>(2026);
+  const [calendarMonth, setCalendarMonth] = useState<number>(6); // Default to July
+  const [isTeluguMode, setIsTeluguMode] = useState<boolean>(false);
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date>(new Date());
+
+  // Sync Calendar view to the selected date Str
+  useEffect(() => {
+    if (selectedDateStr) {
+      const [y, m, d] = selectedDateStr.split('-').map(Number);
+      const targetDate = new Date(y, m - 1, d);
+      setSelectedCalendarDate(targetDate);
+      setCalendarYear(y);
+      setCalendarMonth(m - 1);
+    }
+  }, [selectedDateStr]);
+
+  const getDaysForGrid = () => {
+    const daysList: { date: Date; isCurrentMonth: boolean }[] = [];
+    
+    if (!isTeluguMode) {
+      // Gregorian Mode: standard Gregorian year and month
+      const firstDayOfMonth = new Date(calendarYear, calendarMonth, 1);
+      const startWeekday = firstDayOfMonth.getDay(); // 0 is Sun, 6 is Sat
+      
+      // Get previous month days to pad
+      const prevMonthLast = new Date(calendarYear, calendarMonth, 0);
+      const prevMonthDaysCount = prevMonthLast.getDate();
+      for (let i = startWeekday - 1; i >= 0; i--) {
+        const d = new Date(calendarYear, calendarMonth - 1, prevMonthDaysCount - i);
+        daysList.push({ date: d, isCurrentMonth: false });
+      }
+      
+      // Get current month days
+      const currentMonthLast = new Date(calendarYear, calendarMonth + 1, 0);
+      const currentMonthDaysCount = currentMonthLast.getDate();
+      for (let i = 1; i <= currentMonthDaysCount; i++) {
+        const d = new Date(calendarYear, calendarMonth, i);
+        daysList.push({ date: d, isCurrentMonth: true });
+      }
+      
+      // Pad next month days to make exactly 42 cells
+      let nextMonthDay = 1;
+      while (daysList.length < 42) {
+        const d = new Date(calendarYear, calendarMonth + 1, nextMonthDay++);
+        daysList.push({ date: d, isCurrentMonth: false });
+      }
+    } else {
+      // Telugu Mode: calendarMonth is Telugu month index (0 to 11) for calendarYear
+      const teluguMonthStart = getTeluguMonthStartDate(calendarYear, calendarMonth, selectedCity.lat, selectedCity.lng);
+      const startWeekday = teluguMonthStart.getDay();
+      
+      // Pad previous days
+      for (let i = startWeekday - 1; i >= 0; i--) {
+        const d = new Date(teluguMonthStart.getTime() - (i + 1) * 24 * 60 * 60 * 1000);
+        daysList.push({ date: d, isCurrentMonth: false });
+      }
+      
+      // Standard Telugu Month is exactly 30 days
+      for (let i = 0; i < 30; i++) {
+        const d = new Date(teluguMonthStart.getTime() + i * 24 * 60 * 60 * 1000);
+        daysList.push({ date: d, isCurrentMonth: true });
+      }
+      
+      // Pad remaining days to 42 cells
+      let offset = 30;
+      while (daysList.length < 42) {
+        const d = new Date(teluguMonthStart.getTime() + offset * 24 * 60 * 60 * 1000);
+        daysList.push({ date: d, isCurrentMonth: false });
+        offset++;
+      }
+    }
+    
+    return daysList;
+  };
+
+  const incrementMonth = (step: number) => {
+    let newMonth = calendarMonth + step;
+    let newYear = calendarYear;
+    
+    if (newMonth < 0) {
+      newMonth = 11;
+      newYear -= 1;
+    } else if (newMonth > 11) {
+      newMonth = 0;
+      newYear += 1;
+    }
+    
+    setCalendarMonth(newMonth);
+    setCalendarYear(newYear);
+  };
+  
+  const resetToToday = () => {
+    const d = new Date();
+    setSelectedCalendarDate(d);
+    setCalendarYear(d.getFullYear());
+    setCalendarMonth(d.getMonth());
+  };
+
+  const jumpToDetailedDay = (date: Date) => {
+    const formatted = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    setSelectedDateStr(formatted);
+    setActiveTab('today');
+  };
 
 
 
@@ -505,241 +618,442 @@ export default function App() {
 
       {screen === 'dashboard' && calculations && (
         <main style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-          
-          <div ref={headerRef} className={`sticky-dashboard-header ${isHeaderCollapsed ? 'collapsed' : ''}`}>
-            <header className="app-header">
-              <button className="header-btn" aria-label="Menu" onClick={() => setScreen('welcome')}>
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              
-              <div className="logo-container">
-                <svg viewBox="0 0 100 100" className="app-logo-mark" fill="none" strokeWidth="2.5">
-                  <path d="M50,15 C45,35 30,45 30,55 C30,67 39,75 50,75 C61,75 70,67 70,55 C70,45 55,35 50,15 Z" />
-                  <path d="M50,15 C55,35 70,45 70,55 C70,67 61,75 50,75" strokeDasharray="2,2" />
-                  <circle cx="50" cy="55" r="8" strokeWidth="1.5" />
-                  <line x1="50" y1="15" x2="50" y2="75" strokeWidth="1" strokeDasharray="1,2" />
-                </svg>
-                <h1 className="app-title-main title-serif">AakashaSutram</h1>
-                <span className="app-subtitle-main">align. awaken. ascend.</span>
-              </div>
-
-              <button className="header-btn" aria-label="Notifications" onClick={() => alert("Peaceful alignments loaded.")}>
-                <Bell className="w-5 h-5" />
-              </button>
-            </header>
-
-            {/* Date Picker Bar */}
-          <div className="date-picker-bar">
-            <button className="date-nav-btn" onClick={() => shiftDate(-1)}>
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            
-            <div className="date-display-container">
-              <div className="date-option" onClick={() => shiftDate(-1)}>
-                <span className="date-option-label">Yesterday</span>
-                <span className="date-option-value">
-                  {yesterday.getDate()} {yesterday.toLocaleDateString('en-US', { month: 'short' })}
-                </span>
-              </div>
-              
-              <div className="date-option active">
-                <span className="date-option-label">Today</span>
-                <span className="date-option-value">
-                  {today.getDate()} {today.toLocaleDateString('en-US', { month: 'short' })}
-                </span>
-              </div>
-
-              <div className="date-option" onClick={() => shiftDate(1)}>
-                <span className="date-option-label">Tomorrow</span>
-                <span className="date-option-value">
-                  {tomorrow.getDate()} {tomorrow.toLocaleDateString('en-US', { month: 'short' })}
-                </span>
-              </div>
-            </div>
-
-            <button className="date-nav-btn" onClick={() => shiftDate(1)}>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Location display notice */}
-          <div style={{ textAlign: 'center', fontSize: '12px', color: 'var(--color-muted)', marginBottom: '16px', fontWeight: 500 }}>
-            Calculated for: <span style={{ color: 'var(--color-charcoal)', fontWeight: 600 }}>{selectedCity.name}</span> on <span style={{ color: 'var(--color-charcoal)', fontWeight: 600 }}>{getWeekday(today)}, {formatDateString(today)}</span>
-          </div>
-
-          {/* Sunrise/Sunset Cards Grid */}
-          <div className="sun-cards-grid">
-            {/* Sunrise Card */}
-            <div className="sun-card sunrise">
-              <div className="sun-card-info">
-                <div className="sun-card-header">
-                  <Sun className="sun-card-icon" />
-                  <span className="sun-card-title">Sunrise</span>
-                </div>
-                <span className="sun-card-time">{formatTimeString(calculations.sunrise)}</span>
-              </div>
-              
-              {/* Arched window decoration */}
-              <div className="arched-window">
-                <div className="arch-bg"></div>
-                {/* Layered mountain scenery SVG with vector sun & rays */}
-                <svg viewBox="0 0 100 100" className="arch-silhouette" fill="none">
-                  <defs>
-                    <radialGradient id="sunriseSun" cx="50%" cy="50%" r="50%">
-                      <stop offset="0%" stopColor="#FFFFFF" />
-                      <stop offset="40%" stopColor="#FFF4DE" />
-                      <stop offset="100%" stopColor="#F5C66C" />
-                    </radialGradient>
-                    <filter id="sunGlow" x="-50%" y="-50%" width="200%" height="200%">
-                      <feGaussianBlur stdDeviation="3" result="blur" />
-                      <feMerge>
-                        <feMergeNode in="blur" />
-                        <feMergeNode in="SourceGraphic" />
-                      </feMerge>
-                    </filter>
-                  </defs>
+          {activeTab === 'calendar' ? (
+            <div className="calendar-view-container">
+              {/* 1. Header Navigation */}
+              <div className="sticky-calendar-header">
+                <header className="app-header" style={{ position: 'static', padding: 0, border: 'none', background: 'transparent' }}>
+                  <button className="header-btn" aria-label="Menu" onClick={() => setScreen('welcome')}>
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
                   
-                  {/* Sunburst Rays */}
-                  <g stroke="#F5C66C" strokeWidth="0.8" opacity="0.7" strokeLinecap="round">
-                    <line x1="50" y1="49" x2="50" y2="32" />
-                    <line x1="34" y1="65" x2="18" y2="65" />
-                    <line x1="66" y1="65" x2="82" y2="65" />
-                    <line x1="38" y1="53" x2="27" y2="42" />
-                    <line x1="62" y1="53" x2="73" y2="42" />
-                    
-                    <line x1="44" y1="50" x2="39" y2="40" strokeWidth="0.5" opacity="0.45" />
-                    <line x1="56" y1="50" x2="61" y2="40" strokeWidth="0.5" opacity="0.45" />
-                    <line x1="37" y1="57" x2="29" y2="50" strokeWidth="0.5" opacity="0.45" />
-                    <line x1="63" y1="57" x2="71" y2="50" strokeWidth="0.5" opacity="0.45" />
-                  </g>
-                  
-                  {/* Sun Disk */}
-                  <circle cx="50" cy="65" r="12" fill="url(#sunriseSun)" filter="url(#sunGlow)" />
-                  
-                  {/* Mountain silhouettes */}
-                  <path d="M0,100 L0,75 C20,70 30,85 50,78 C70,72 80,82 100,75 L100,100 Z" fill="#D7D3E8" opacity="0.6" strokeWidth="0" />
-                  <path d="M0,100 L0,82 C15,80 25,90 45,84 C65,78 75,88 100,80 L100,100 Z" fill="#C5BED4" strokeWidth="0" />
-                </svg>
-              </div>
-
-              <div className="pill-status">
-                <SunriseIcon className="w-3.5 h-3.5" style={{ stroke: 'var(--color-sage)' }} />
-                <span>Auspicious Sunrise</span>
-              </div>
-            </div>
-
-            {/* Sunset Card */}
-            <div className="sun-card sunset">
-              <div className="sun-card-info">
-                <div className="sun-card-header">
-                  <SunsetIcon className="sun-card-icon" />
-                  <span className="sun-card-title">Sunset</span>
-                </div>
-                <span className="sun-card-time">{formatTimeString(calculations.sunset)}</span>
-              </div>
-              
-              {/* Arched window decoration */}
-              <div className="arched-window">
-                <div className="arch-bg"></div>
-                {/* Layered mountain scenery SVG with vector sun & rays */}
-                <svg viewBox="0 0 100 100" className="arch-silhouette" fill="none">
-                  <defs>
-                    <radialGradient id="sunsetSun" cx="50%" cy="50%" r="50%">
-                      <stop offset="0%" stopColor="#FFF4EF" />
-                      <stop offset="50%" stopColor="#F3B39C" />
-                      <stop offset="100%" stopColor="#D6745B" />
-                    </radialGradient>
-                    <filter id="sunsetGlow" x="-50%" y="-50%" width="200%" height="200%">
-                      <feGaussianBlur stdDeviation="4" result="blur" />
-                      <feMerge>
-                        <feMergeNode in="blur" />
-                        <feMergeNode in="SourceGraphic" />
-                      </feMerge>
-                    </filter>
-                  </defs>
-                  
-                  {/* Sunburst Rays */}
-                  <g stroke="#D6745B" strokeWidth="1.0" opacity="0.55" strokeLinecap="round">
-                    <line x1="50" y1="72" x2="50" y2="55" />
-                    <line x1="34" y1="88" x2="18" y2="88" />
-                    <line x1="66" y1="88" x2="82" y2="88" />
-                    <line x1="38" y1="76" x2="27" y2="65" />
-                    <line x1="62" y1="76" x2="73" y2="65" />
-                    
-                    <line x1="43" y1="74" x2="36" y2="64" strokeWidth="0.6" opacity="0.35" />
-                    <line x1="57" y1="74" x2="64" y2="64" strokeWidth="0.6" opacity="0.35" />
-                  </g>
-                  
-                  {/* Sun Disk */}
-                  <circle cx="50" cy="88" r="12" fill="url(#sunsetSun)" filter="url(#sunsetGlow)" />
-                  
-                  {/* Mountain silhouettes */}
-                  <path d="M0,100 L0,78 C30,72 40,88 60,82 C80,76 90,84 100,78 L100,100 Z" fill="#E6C5B8" opacity="0.6" strokeWidth="0" />
-                  <path d="M0,100 L0,84 C25,82 35,92 55,86 C75,80 85,90 100,82 L100,100 Z" fill="#D69580" opacity="0.8" strokeWidth="0" />
-                </svg>
-              </div>
-
-              <div className="pill-status">
-                <SunsetIcon className="w-3.5 h-3.5" style={{ stroke: 'var(--color-terracotta)' }} />
-                <span>Peaceful Sunset</span>
-              </div>
-            </div>
-          </div>
-          </div>
-
-          {/* Wednesday Abhijit warning notice */}
-          {today.getDay() === 3 && (
-            <div className="info-notice info-notice-warning">
-              <Info className="info-notice-icon" />
-              <span>
-                <strong>Wednesday Exception:</strong> Abhijit Muhurtha is not recommended for starting new tasks on Wednesdays due to the clash with Mercury's energy.
-              </span>
-            </div>
-          )}
-
-          {/* Nakshatra Information Info notice */}
-          <div className="info-notice info-notice-info">
-            <Compass className="info-notice-icon" style={{ stroke: 'var(--color-sage)' }} />
-            <span>
-              Active Nakshatra: <strong>{calculations.nakshatraName}</strong> ({formatTimeString(calculations.nakshatraStartTime)} - {formatTimeString(calculations.nakshatraEndTime)})
-            </span>
-          </div>
-
-          {/* Section title bar */}
-          <div className="section-header-bar">
-            <h2 className="section-header-title font-serif">Daily Muhurtas</h2>
-          </div>
-
-          {/* Kalam Table Container */}
-          <div className="kalam-table-container">
-            <div className="kalam-table-header">
-              <span>Kalam</span>
-              <span>Start time</span>
-              <span>End time</span>
-            </div>
-
-            <div className="kalam-rows-body">
-              {blendedKalams.map((k, idx) => (
-                <div 
-                  key={idx} 
-                  className={`kalam-row ${
-                    k.type === 'auspicious' ? 'row-auspicious' : 
-                    k.type === 'inauspicious' ? 'row-inauspicious' : 'row-neutral'
-                  }`}
-                  onClick={() => setSelectedKalam(k)}
-                >
-                  <div className="kalam-cell-name">
-                    <div className="kalam-icon-wrapper">
-                      {getKalamIcon(k.name)}
-                    </div>
-                    <span>{k.name}</span>
+                  <div className="logo-container">
+                    <h1 className="app-title-main title-serif" style={{ fontSize: '18px' }}>AakashaSutram</h1>
+                    <span className="app-subtitle-main">Panchangam Calendar</span>
                   </div>
-                  <span className="kalam-cell-time">{formatTimeString(k.startTime)}</span>
-                  <span className="kalam-cell-time">{formatTimeString(k.endTime)}</span>
+
+                  <button className="header-btn" aria-label="Notifications" onClick={() => alert("Peaceful alignments loaded.")}>
+                    <Bell className="w-5 h-5" />
+                  </button>
+                </header>
+
+                <div className="calendar-nav-bar">
+                  <div className="calendar-selectors">
+                    {/* Month Dropdown */}
+                    <div className="calendar-dropdown-wrapper">
+                      <select 
+                        className="calendar-select"
+                        value={calendarMonth}
+                        onChange={(e) => setCalendarMonth(Number(e.target.value))}
+                      >
+                        {!isTeluguMode ? (
+                          // Gregorian Months
+                          Array.from({ length: 12 }, (_, i) => {
+                            const d = new Date(2026, i, 1);
+                            return (
+                              <option key={i} value={i}>
+                                {d.toLocaleDateString('en-US', { month: 'long' })}
+                              </option>
+                            );
+                          })
+                        ) : (
+                          // Telugu Months
+                          TELUGU_MONTHS.map((m, i) => (
+                            <option key={i} value={i}>
+                              {m}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                      <ChevronRight className="calendar-select-icon w-4 h-4 rotate-90" />
+                    </div>
+
+                    {/* Year Dropdown */}
+                    <div className="calendar-dropdown-wrapper">
+                      <select
+                        className="calendar-select"
+                        value={calendarYear}
+                        onChange={(e) => setCalendarYear(Number(e.target.value))}
+                      >
+                        {Array.from({ length: 16 }, (_, i) => {
+                          const yr = 2020 + i;
+                          return (
+                            <option key={i} value={yr}>
+                              {yr} ({TELUGU_SAMVATSARAS[(yr - 2024 + 37 + 60 * 10) % 60]})
+                            </option>
+                          );
+                        })}
+                      </select>
+                      <ChevronRight className="calendar-select-icon w-4 h-4 rotate-90" />
+                    </div>
+                  </div>
+
+                  <div className="calendar-center-nav">
+                    <button className="date-nav-btn" onClick={() => incrementMonth(-1)}>
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button className="calendar-btn-today" onClick={resetToToday}>
+                      Today
+                    </button>
+                    <button className="date-nav-btn" onClick={() => incrementMonth(1)}>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-              ))}
+
+                {/* Telugu Mode Toggle Switch */}
+                <div className="calendar-toggle-section">
+                  <span className="calendar-toggle-label">Telugu Lunar Calendar Mode</span>
+                  <label className="switch-toggle">
+                    <input 
+                      type="checkbox"
+                      checked={isTeluguMode}
+                      onChange={(e) => setIsTeluguMode(e.target.checked)}
+                    />
+                    <span className="switch-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              {/* 2. Calendar Grid */}
+              <div className="calendar-grid-container">
+                <div className="calendar-weekdays-header">
+                  <div className="weekday-label">Sun</div>
+                  <div className="weekday-label">Mon</div>
+                  <div className="weekday-label">Tue</div>
+                  <div className="weekday-label">Wed</div>
+                  <div className="weekday-label">Thu</div>
+                  <div className="weekday-label">Fri</div>
+                  <div className="weekday-label">Sat</div>
+                </div>
+
+                <div className="calendar-grid-cells">
+                  {getDaysForGrid().map((cell, idx) => {
+                    const panchang = getTeluguPanchangamForDate(cell.date, selectedCity.lat, selectedCity.lng);
+                    
+                    const todayDate = new Date();
+                    const isToday = cell.date.getDate() === todayDate.getDate() &&
+                                    cell.date.getMonth() === todayDate.getMonth() &&
+                                    cell.date.getFullYear() === todayDate.getFullYear();
+                    
+                    const isSelected = cell.date.getDate() === selectedCalendarDate.getDate() &&
+                                       cell.date.getMonth() === selectedCalendarDate.getMonth() &&
+                                       cell.date.getFullYear() === selectedCalendarDate.getFullYear();
+
+                    // Shorten tithi text for grid cells
+                    let tithiShort = panchang.tithiName;
+                    if (tithiShort.includes("Suddha ")) tithiShort = tithiShort.replace("Suddha ", "S-");
+                    if (tithiShort.includes("Bahula ")) tithiShort = tithiShort.replace("Bahula ", "B-");
+
+                    return (
+                      <div 
+                        key={idx}
+                        className={`day-cell ${!cell.isCurrentMonth ? 'inactive-day' : ''} ${isToday ? 'current-day' : ''} ${isSelected ? 'selected-day' : ''}`}
+                        onClick={() => setSelectedCalendarDate(cell.date)}
+                      >
+                        <div className="day-cell-top">
+                          <span className="day-number">{cell.date.getDate()}</span>
+                        </div>
+                        <div className="day-cell-bottom">
+                          <span className="day-tithi">{tithiShort} {panchang.tithiEndTime ? `(${formatTimeString(panchang.tithiEndTime).replace(/^0/, '')})` : ''}</span>
+                          <div className="day-indicators">
+                            {panchang.isAuspicious && <div className="day-dot auspicious" />}
+                            {panchang.festival && <div className="day-dot festival" />}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 3. Detailed Card */}
+              {(() => {
+                const panchangDetails = getTeluguPanchangamForDate(selectedCalendarDate, selectedCity.lat, selectedCity.lng);
+                return (
+                  <div className="calendar-details-card">
+                    <div className="details-card-header">
+                      <h3 className="details-card-title">Panchangam Details</h3>
+                      <span className="details-card-date">
+                        {selectedCalendarDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                      </span>
+                    </div>
+                    
+                    <div className="details-card-panchang">
+                      <div className="panchang-row">
+                        <span className="panchang-label">Telugu Samvatsaram:</span>
+                        <span className="panchang-value">{panchangDetails.samvatsaraName}</span>
+                      </div>
+                      <div className="panchang-row">
+                        <span className="panchang-label">Telugu Masamu:</span>
+                        <span className="panchang-value">{panchangDetails.monthName}</span>
+                      </div>
+                      <div className="panchang-row">
+                        <span className="panchang-label">Active Tithi:</span>
+                        <span className="panchang-value">
+                          {panchangDetails.tithiName} {panchangDetails.tithiEndTime ? `(ends at ${formatTimeString(panchangDetails.tithiEndTime)})` : ''}
+                        </span>
+                      </div>
+                      <div className="panchang-row">
+                        <span className="panchang-label">Day Status:</span>
+                        <span className="panchang-value" style={{ color: panchangDetails.isAuspicious ? 'var(--color-sage)' : 'var(--color-charcoal)', fontWeight: 700 }}>
+                          {panchangDetails.isAuspicious ? 'Spiritual / Auspicious' : 'Regular'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {panchangDetails.festival && (
+                      <div className="festival-tag">
+                        🎉 Festival: {panchangDetails.festival}
+                      </div>
+                    )}
+                    
+                    <button className="calendar-action-btn" onClick={() => jumpToDetailedDay(selectedCalendarDate)}>
+                      <Compass className="w-4 h-4" />
+                      <span>View Detailed Muhurtas</span>
+                    </button>
+                  </div>
+                );
+              })()}
             </div>
-          </div>
+          ) : (
+            <>
+              <div ref={headerRef} className={`sticky-dashboard-header ${isHeaderCollapsed ? 'collapsed' : ''}`}>
+                <header className="app-header">
+                  <button className="header-btn" aria-label="Menu" onClick={() => setScreen('welcome')}>
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  
+                  <div className="logo-container">
+                    <svg viewBox="0 0 100 100" className="app-logo-mark" fill="none" strokeWidth="2.5">
+                      <path d="M50,15 C45,35 30,45 30,55 C30,67 39,75 50,75 C61,75 70,67 70,55 C70,45 55,35 50,15 Z" />
+                      <path d="M50,15 C55,35 70,45 70,55 C70,67 61,75 50,75" strokeDasharray="2,2" />
+                      <circle cx="50" cy="55" r="8" strokeWidth="1.5" />
+                      <line x1="50" y1="15" x2="50" y2="75" strokeWidth="1" strokeDasharray="1,2" />
+                    </svg>
+                    <h1 className="app-title-main title-serif">AakashaSutram</h1>
+                    <span className="app-subtitle-main">align. awaken. ascend.</span>
+                  </div>
+
+                  <button className="header-btn" aria-label="Notifications" onClick={() => alert("Peaceful alignments loaded.")}>
+                    <Bell className="w-5 h-5" />
+                  </button>
+                </header>
+
+                {/* Date Picker Bar */}
+                <div className="date-picker-bar">
+                  <button className="date-nav-btn" onClick={() => shiftDate(-1)}>
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  
+                  <div className="date-display-container">
+                    <div className="date-option" onClick={() => shiftDate(-1)}>
+                      <span className="date-option-label">Yesterday</span>
+                      <span className="date-option-value">
+                        {yesterday.getDate()} {yesterday.toLocaleDateString('en-US', { month: 'short' })}
+                      </span>
+                    </div>
+                    
+                    <div className="date-option active">
+                      <span className="date-option-label">Today</span>
+                      <span className="date-option-value">
+                        {today.getDate()} {today.toLocaleDateString('en-US', { month: 'short' })}
+                      </span>
+                    </div>
+
+                    <div className="date-option" onClick={() => shiftDate(1)}>
+                      <span className="date-option-label">Tomorrow</span>
+                      <span className="date-option-value">
+                        {tomorrow.getDate()} {tomorrow.toLocaleDateString('en-US', { month: 'short' })}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button className="date-nav-btn" onClick={() => shiftDate(1)}>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Location display notice */}
+                <div style={{ textAlign: 'center', fontSize: '12px', color: 'var(--color-muted)', marginBottom: '16px', fontWeight: 500 }}>
+                  Calculated for: <span style={{ color: 'var(--color-charcoal)', fontWeight: 600 }}>{selectedCity.name}</span> on <span style={{ color: 'var(--color-charcoal)', fontWeight: 600 }}>{getWeekday(today)}, {formatDateString(today)}</span>
+                </div>
+
+                {/* Sunrise/Sunset Cards Grid */}
+                <div className="sun-cards-grid">
+                  {/* Sunrise Card */}
+                  <div className="sun-card sunrise">
+                    <div className="sun-card-info">
+                      <div className="sun-card-header">
+                        <Sun className="sun-card-icon" />
+                        <span className="sun-card-title">Sunrise</span>
+                      </div>
+                      <span className="sun-card-time">{formatTimeString(calculations.sunrise)}</span>
+                    </div>
+                    
+                    {/* Arched window decoration */}
+                    <div className="arched-window">
+                      <div className="arch-bg"></div>
+                      {/* Layered mountain scenery SVG with vector sun & rays */}
+                      <svg viewBox="0 0 100 100" className="arch-silhouette" fill="none">
+                        <defs>
+                          <radialGradient id="sunriseSun" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stopColor="#FFFFFF" />
+                            <stop offset="40%" stopColor="#FFF4DE" />
+                            <stop offset="100%" stopColor="#F5C66C" />
+                          </radialGradient>
+                          <filter id="sunGlow" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur stdDeviation="3" result="blur" />
+                            <feMerge>
+                              <feMergeNode in="blur" />
+                              <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                          </filter>
+                        </defs>
+                        
+                        {/* Sunburst Rays */}
+                        <g stroke="#F5C66C" strokeWidth="0.8" opacity="0.7" strokeLinecap="round">
+                          <line x1="50" y1="49" x2="50" y2="32" />
+                          <line x1="34" y1="65" x2="18" y2="65" />
+                          <line x1="66" y1="65" x2="82" y2="65" />
+                          <line x1="38" y1="53" x2="27" y2="42" />
+                          <line x1="62" y1="53" x2="73" y2="42" />
+                          
+                          <line x1="44" y1="50" x2="39" y2="40" strokeWidth="0.5" opacity="0.45" />
+                          <line x1="56" y1="50" x2="61" y2="40" strokeWidth="0.5" opacity="0.45" />
+                          <line x1="37" y1="57" x2="29" y2="50" strokeWidth="0.5" opacity="0.45" />
+                          <line x1="63" y1="57" x2="71" y2="50" strokeWidth="0.5" opacity="0.45" />
+                        </g>
+                        
+                        {/* Sun Disk */}
+                        <circle cx="50" cy="65" r="12" fill="url(#sunriseSun)" filter="url(#sunGlow)" />
+                        
+                        {/* Mountain silhouettes */}
+                        <path d="M0,100 L0,75 C20,70 30,85 50,78 C70,72 80,82 100,75 L100,100 Z" fill="#D7D3E8" opacity="0.6" strokeWidth="0" />
+                        <path d="M0,100 L0,82 C15,80 25,90 45,84 C65,78 75,88 100,80 L100,100 Z" fill="#C5BED4" strokeWidth="0" />
+                      </svg>
+                    </div>
+
+                    <div className="pill-status">
+                      <SunriseIcon className="w-3.5 h-3.5" style={{ stroke: 'var(--color-sage)' }} />
+                      <span>Auspicious Sunrise</span>
+                    </div>
+                  </div>
+
+                  {/* Sunset Card */}
+                  <div className="sun-card sunset">
+                    <div className="sun-card-info">
+                      <div className="sun-card-header">
+                        <SunsetIcon className="sun-card-icon" />
+                        <span className="sun-card-title">Sunset</span>
+                      </div>
+                      <span className="sun-card-time">{formatTimeString(calculations.sunset)}</span>
+                    </div>
+                    
+                    {/* Arched window decoration */}
+                    <div className="arched-window">
+                      <div className="arch-bg"></div>
+                      {/* Layered mountain scenery SVG with vector sun & rays */}
+                      <svg viewBox="0 0 100 100" className="arch-silhouette" fill="none">
+                        <defs>
+                          <radialGradient id="sunsetSun" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stopColor="#FFF4EF" />
+                            <stop offset="50%" stopColor="#F3B39C" />
+                            <stop offset="100%" stopColor="#D6745B" />
+                          </radialGradient>
+                          <filter id="sunsetGlow" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur stdDeviation="3" result="blur" />
+                            <feMerge>
+                              <feMergeNode in="blur" />
+                              <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                          </filter>
+                        </defs>
+                        
+                        {/* Sunburst Rays */}
+                        <g stroke="#D6745B" strokeWidth="0.8" opacity="0.5" strokeLinecap="round">
+                          <line x1="50" y1="74" x2="50" y2="52" />
+                          <line x1="32" y1="88" x2="16" y2="88" />
+                          <line x1="68" y1="88" x2="84" y2="88" />
+                          <line x1="36" y1="78" x2="24" y2="67" />
+                          <line x1="64" y1="78" x2="76" y2="67" />
+                          
+                          <line x1="43" y1="77" x2="38" y2="68" strokeWidth="0.6" opacity="0.35" />
+                          <line x1="57" y1="74" x2="64" y2="64" strokeWidth="0.6" opacity="0.35" />
+                        </g>
+                        
+                        {/* Sun Disk */}
+                        <circle cx="50" cy="88" r="12" fill="url(#sunsetSun)" filter="url(#sunsetGlow)" />
+                        
+                        {/* Mountain silhouettes */}
+                        <path d="M0,100 L0,78 C30,72 40,88 60,82 C80,76 90,84 100,78 L100,100 Z" fill="#E6C5B8" opacity="0.6" strokeWidth="0" />
+                        <path d="M0,100 L0,84 C25,82 35,92 55,86 C75,80 85,90 100,82 L100,100 Z" fill="#D69580" opacity="0.8" strokeWidth="0" />
+                      </svg>
+                    </div>
+
+                    <div className="pill-status">
+                      <SunsetIcon className="w-3.5 h-3.5" style={{ stroke: 'var(--color-terracotta)' }} />
+                      <span>Peaceful Sunset</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Wednesday Abhijit warning notice */}
+              {today.getDay() === 3 && (
+                <div className="info-notice info-notice-warning">
+                  <Info className="info-notice-icon" />
+                  <span>
+                    <strong>Wednesday Exception:</strong> Abhijit Muhurtha is not recommended for starting new tasks on Wednesdays due to the clash with Mercury's energy.
+                  </span>
+                </div>
+              )}
+
+              {/* Nakshatra Information Info notice */}
+              <div className="info-notice info-notice-info">
+                <Compass className="info-notice-icon" style={{ stroke: 'var(--color-sage)' }} />
+                <span>
+                  Active Nakshatra: <strong>{calculations.nakshatraName}</strong> ({formatTimeString(calculations.nakshatraStartTime)} - {formatTimeString(calculations.nakshatraEndTime)})
+                </span>
+              </div>
+
+              {/* Section title bar */}
+              <div className="section-header-bar">
+                <h2 className="section-header-title font-serif">Daily Muhurtas</h2>
+              </div>
+
+              {/* Kalam Table Container */}
+              <div className="kalam-table-container">
+                <div className="kalam-table-header">
+                  <span>Kalam</span>
+                  <span>Start time</span>
+                  <span>End time</span>
+                </div>
+
+                <div className="kalam-rows-body">
+                  {blendedKalams.map((k, idx) => (
+                    <div 
+                      key={idx} 
+                      className={`kalam-row ${
+                        k.type === 'auspicious' ? 'row-auspicious' : 
+                        k.type === 'inauspicious' ? 'row-inauspicious' : 'row-neutral'
+                      }`}
+                      onClick={() => setSelectedKalam(k)}
+                    >
+                      <div className="kalam-cell-name">
+                        <div className="kalam-icon-wrapper">
+                          {getKalamIcon(k.name)}
+                        </div>
+                        <span>{k.name}</span>
+                      </div>
+                      <span className="kalam-cell-time">{formatTimeString(k.startTime)}</span>
+                      <span className="kalam-cell-time">{formatTimeString(k.endTime)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </main>
       )}
 

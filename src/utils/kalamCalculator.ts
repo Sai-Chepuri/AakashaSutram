@@ -379,3 +379,219 @@ export function getNoonInTimezone(dateStr: string, timezone: string): Date {
   
   return new Date(constructedUTC - diffMs);
 }
+
+export const TELUGU_MONTHS = [
+  "Chaitramu", "Vaishakhamu", "Jyeshtamu", "Ashadhamu", "Shravanamu", "Bhadrapadamu",
+  "Ashwayujamu", "Karthikamu", "Margashiramu", "Pushyamu", "Maghamu", "Phalgunamu"
+];
+
+export const TELUGU_SAMVATSARAS = [
+  "Prabhava", "Vibhava", "Shukla", "Pramodoota", "Prajopti", "Angirasa", "Shrimukha", "Bhava", "Yuva", "Dhatru",
+  "Eeshwara", "Bahudhanya", "Pramadi", "Vikrama", "Vrusha", "Chitrabhanu", "Swabhannu", "Tharana", "Parthiva", "Vyaya",
+  "Sarvajithu", "Sarvadhari", "Virodhi", "Vikruthi", "Khara", "Nandana", "Vijaya", "Jaya", "Manmadha", "Durmukhi",
+  "Hevilambi", "Vilambi", "Vikari", "Sharvari", "Plava", "Shubhakruthi", "Shobhakruthi", "Krodhi", "Vishwavasu", "Parabhava",
+  "Plavanga", "Keelaka", "Sowmya", "Sadharana", "Virodhikruthi", "Paridhavi", "Pramadecha", "Ananda", "Rakshasa", "Nala",
+  "Pingala", "Kalayukthi", "Siddharthi", "Raudra", "Durmathi", "Dundubhi", "Rudhirodgari", "Raktakshi", "Krodhana", "Akshaya"
+];
+
+export interface TeluguPanchangam {
+  tithiNum: number;
+  tithiName: string;
+  tithiEndTime?: Date;
+  monthName: string;
+  samvatsaraName: string;
+  isAuspicious: boolean;
+  festival?: string;
+}
+
+export function getTeluguPanchangamForDate(date: Date, lat: number = 28.6139, lng: number = 77.2090): TeluguPanchangam {
+  const obs = new Observer(lat, lng, 0);
+
+  const getMoonTopocentricLon = (d: Date) => {
+    const eq = Equator(Body.Moon, d, obs, true, true);
+    const raDeg = eq.ra * 15;
+    const decDeg = eq.dec;
+    const ra = raDeg * Math.PI / 180;
+    const dec = decDeg * Math.PI / 180;
+    const T = (d.getTime() - 946728000000) / (36525 * 24 * 60 * 60 * 1000);
+    const eps = (23.4392911 - 0.0001300 * T) * Math.PI / 180;
+    const y = Math.sin(dec) * Math.sin(eps) + Math.cos(dec) * Math.cos(eps) * Math.sin(ra);
+    const x = Math.cos(dec) * Math.cos(ra);
+    let tropicalLon = Math.atan2(y, x) * 180 / Math.PI;
+    if (tropicalLon < 0) tropicalLon += 360;
+    const ayanamsa = getLahiriAyanamsa(d);
+    return (tropicalLon - ayanamsa + 360) % 360;
+  };
+
+  const getSunTopocentricLon = (d: Date) => {
+    const eq = Equator(Body.Sun, d, obs, true, true);
+    const raDeg = eq.ra * 15;
+    const decDeg = eq.dec;
+    const ra = raDeg * Math.PI / 180;
+    const dec = decDeg * Math.PI / 180;
+    const T = (d.getTime() - 946728000000) / (36525 * 24 * 60 * 60 * 1000);
+    const eps = (23.4392911 - 0.0001300 * T) * Math.PI / 180;
+    const y = Math.sin(dec) * Math.sin(eps) + Math.cos(dec) * Math.cos(eps) * Math.sin(ra);
+    const x = Math.cos(dec) * Math.cos(ra);
+    let tropicalLon = Math.atan2(y, x) * 180 / Math.PI;
+    if (tropicalLon < 0) tropicalLon += 360;
+    const ayanamsa = getLahiriAyanamsa(d);
+    return (tropicalLon - ayanamsa + 360) % 360;
+  };
+
+  // Evaluate at noon local time to avoid boundary flips at midnight
+  const noonDate = new Date(date);
+  noonDate.setHours(12, 0, 0, 0);
+
+  const moonLon = getMoonTopocentricLon(noonDate);
+  const sunLon = getSunTopocentricLon(noonDate);
+
+  const diff = (moonLon - sunLon + 360) % 360;
+  const tithiNum = Math.floor(diff / 12) + 1; // 1 to 30
+
+  let paksha: "Suddha" | "Bahula";
+  let tithiIndex: number;
+  if (tithiNum <= 15) {
+    paksha = "Suddha";
+    tithiIndex = tithiNum - 1;
+  } else {
+    paksha = "Bahula";
+    tithiIndex = tithiNum - 16;
+  }
+
+  let tithiName = "";
+  if (tithiNum === 15) {
+    tithiName = "Pournami";
+  } else if (tithiNum === 30) {
+    tithiName = "Amavasya";
+  } else {
+    const names = [
+      "Padyami", "Vidiya", "Tadiya", "Chavithi", "Panchami", "Shashti",
+      "Saptami", "Ashtami", "Navami", "Dashami", "Ekadasi", "Dwadasi",
+      "Trayodasi", "Chaturdashi"
+    ];
+    tithiName = `${paksha} ${names[tithiIndex]}`;
+  }
+
+  // Calculate End Time of this Tithi
+  const targetDiffLimit = tithiNum * 12;
+  let tithiEndTime: Date | undefined;
+  
+  const scanStart = new Date(date);
+  scanStart.setHours(0, 0, 0, 0);
+  
+  let found = false;
+  for (let h = 0; h < 36; h++) {
+    const t1 = new Date(scanStart.getTime() + h * 60 * 60 * 1000);
+    const t2 = new Date(scanStart.getTime() + (h + 1) * 60 * 60 * 1000);
+    
+    const diff1 = (getMoonTopocentricLon(t1) - getSunTopocentricLon(t1) + 360) % 360;
+    const diff2 = (getMoonTopocentricLon(t2) - getSunTopocentricLon(t2) + 360) % 360;
+    
+    let crossed = false;
+    if (tithiNum === 30) {
+      crossed = (diff1 > 348 && diff2 < 12);
+    } else {
+      crossed = (diff1 < targetDiffLimit && diff2 >= targetDiffLimit);
+    }
+    
+    if (crossed) {
+      for (let m = 0; m <= 60; m++) {
+        const tm = new Date(t1.getTime() + m * 60 * 1000);
+        const diffM = (getMoonTopocentricLon(tm) - getSunTopocentricLon(tm) + 360) % 360;
+        
+        let match = false;
+        if (tithiNum === 30) {
+          match = (diffM < 0.2 || diffM > 359.8);
+        } else {
+          match = (diffM >= targetDiffLimit);
+        }
+        
+        if (match) {
+          tithiEndTime = tm;
+          found = true;
+          break;
+        }
+      }
+    }
+    if (found) break;
+  }
+
+  // Calculate Month
+  const sunLonAtNewMoon = (sunLon - (tithiNum - 1) * 1.01 + 360) % 360;
+  const monthIdx = Math.floor(sunLonAtNewMoon / 30) % 12;
+  const monthName = TELUGU_MONTHS[monthIdx];
+
+  // Calculate Samvatsara
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const effectiveYear = (month < 4 || (month === 4 && date.getDate() < 15)) ? year - 1 : year; // Approx Ugadi in April
+  const index = (effectiveYear - 2024 + 37 + 60 * 10) % 60;
+  const samvatsaraName = TELUGU_SAMVATSARAS[index];
+
+  const isAuspicious = tithiNum === 11 || tithiNum === 26 || tithiNum === 15 || tithiNum === 1 || tithiNum === 5;
+
+  let festival: string | undefined;
+  if (tithiNum === 15 && monthIdx === 0) festival = "Hanuman Jayanthi";
+  if (tithiNum === 30 && monthIdx === 6) festival = "Deepavali";
+  if (tithiNum === 9 && monthIdx === 0) festival = "Sri Rama Navami";
+  if (tithiNum === 4 && monthIdx === 5) festival = "Vinayaka Chavithi";
+  if (tithiNum === 14 && monthIdx === 10) festival = "Maha Shivaratri";
+  if (tithiNum === 1 && monthIdx === 0) festival = "Ugadi";
+  if (tithiNum === 5 && monthIdx === 4) festival = "Ganesh Chaturthi";
+  if (tithiNum === 10 && monthIdx === 6) festival = "Vijayadashami";
+
+  return {
+    tithiNum,
+    tithiName,
+    tithiEndTime,
+    monthName,
+    samvatsaraName,
+    isAuspicious,
+    festival
+  };
+}
+
+export function getTeluguMonthStartDate(year: number, teluguMonthIdx: number, lat: number = 28.6139, lng: number = 77.2090): Date {
+  const searchStart = new Date(year, 2, 1, 12, 0, 0); // March 1st
+  const obs = new Observer(lat, lng, 0);
+
+  const getDiff = (d: Date) => {
+    const eqMoon = Equator(Body.Moon, d, obs, true, true);
+    const eqSun = Equator(Body.Sun, d, obs, true, true);
+
+    const getLon = (eq: any, dateVal: Date) => {
+      const ra = eq.ra * 15 * Math.PI / 180;
+      const dec = eq.dec * Math.PI / 180;
+      const T = (dateVal.getTime() - 946728000000) / (36525 * 24 * 60 * 60 * 1000);
+      const eps = (23.4392911 - 0.0001300 * T) * Math.PI / 180;
+      const y = Math.sin(dec) * Math.sin(eps) + Math.cos(dec) * Math.cos(eps) * Math.sin(ra);
+      const x = Math.cos(dec) * Math.cos(ra);
+      let l = Math.atan2(y, x) * 180 / Math.PI;
+      if (l < 0) l += 360;
+      return l;
+    };
+
+    const mL = getLon(eqMoon, d);
+    const sL = getLon(eqSun, d);
+    return (mL - sL + 360) % 360;
+  };
+
+  const newMoons: Date[] = [];
+  
+  let prevDiff = getDiff(searchStart);
+  for (let day = 1; day < 370; day++) {
+    const checkDate = new Date(searchStart.getTime() + day * 24 * 60 * 60 * 1000);
+    const currDiff = getDiff(checkDate);
+
+    if (currDiff < prevDiff && prevDiff > 340 && currDiff < 20) {
+      newMoons.push(new Date(checkDate));
+    }
+    prevDiff = currDiff;
+  }
+
+  if (newMoons[teluguMonthIdx]) {
+    return newMoons[teluguMonthIdx];
+  }
+  return new Date(year, 2, 21 + Math.round(teluguMonthIdx * 29.53));
+}

@@ -1,5 +1,11 @@
 import { describe, test, expect } from 'vitest';
-import { calculateDay, calculateWeeklyKalams, getNoonInTimezone } from './kalamCalculator';
+import { 
+  calculateDay, 
+  calculateWeeklyKalams, 
+  getNoonInTimezone,
+  getTeluguPanchangamForDate,
+  getTeluguMonthStartDate
+} from './kalamCalculator';
 
 describe('Vedic Kalam Calculator', () => {
   const testDate = new Date(Date.UTC(2026, 6, 14, 12, 0, 0)); // July 14, 2026 UTC
@@ -49,5 +55,23 @@ describe('Vedic Kalam Calculator', () => {
   test('getNoonInTimezone aligns date string to local target timezone noon', () => {
     const noon = getNoonInTimezone("2026-07-14", "America/New_York");
     expect(noon).toBeInstanceOf(Date);
+  });
+
+  test('getTeluguPanchangamForDate calculates valid Tithi and Month', () => {
+    const panchang = getTeluguPanchangamForDate(testDate, testLat, testLng);
+    expect(panchang).toBeDefined();
+    expect(panchang.tithiNum).toBeGreaterThanOrEqual(1);
+    expect(panchang.tithiNum).toBeLessThanOrEqual(30);
+    expect(panchang.tithiName).toBeTypeOf('string');
+    expect(panchang.tithiEndTime).toBeInstanceOf(Date);
+    expect(panchang.monthName).toBeTypeOf('string');
+    expect(panchang.samvatsaraName).toBeTypeOf('string');
+    expect(typeof panchang.isAuspicious).toBe('boolean');
+  });
+
+  test('getTeluguMonthStartDate calculates start date of month', () => {
+    const startDate = getTeluguMonthStartDate(2026, 0, testLat, testLng); // Chaitramu start
+    expect(startDate).toBeInstanceOf(Date);
+    expect(startDate.getFullYear()).toBe(2026);
   });
 });

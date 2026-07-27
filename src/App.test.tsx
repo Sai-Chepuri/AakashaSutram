@@ -90,4 +90,24 @@ describe('AakashaSutram UI Integration', () => {
       expect(screen.getByText(/Active Nakshatra:/i)).toBeDefined();
     });
   });
+
+  test('transitions to Calendar tab and renders calendar grid', async () => {
+    render(<App />);
+    const input = screen.getByPlaceholderText('Enter location');
+    fireEvent.change(input, { target: { value: 'New Delhi' } });
+    await waitFor(() => { expect(screen.getByText('New Delhi, India')).toBeDefined(); });
+    fireEvent.click(screen.getByText('New Delhi, India'));
+    fireEvent.click(screen.getByText('Calculate'));
+    
+    // Click Calendar tab
+    await waitFor(() => { expect(screen.getByText('Calendar')).toBeDefined(); });
+    fireEvent.click(screen.getByText('Calendar'));
+    
+    // Check Calendar elements are rendered
+    await waitFor(() => {
+      expect(screen.getByText('Panchangam Calendar')).toBeDefined();
+      expect(screen.getByText('Panchangam Details')).toBeDefined();
+      expect(screen.getByText('Telugu Lunar Calendar Mode')).toBeDefined();
+    });
+  });
 });
