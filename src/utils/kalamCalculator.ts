@@ -398,6 +398,8 @@ export interface TeluguPanchangam {
   tithiNum: number;
   tithiName: string;
   tithiEndTime?: Date;
+  nakshatraName: string;
+  nakshatraEndTime?: Date;
   monthName: string;
   samvatsaraName: string;
   isAuspicious: boolean;
@@ -517,6 +519,11 @@ export function getTeluguPanchangamForDate(date: Date, lat: number = 28.6139, ln
     if (found) break;
   }
 
+  // Calculate Nakshatra Details
+  const nakshatraRange = getNakshatraRange(date, lat, lng);
+  const nakshatraName = nakshatraRange.name;
+  const nakshatraEndTime = nakshatraRange.endTime;
+
   // Calculate Month
   const sunLonAtNewMoon = (sunLon - (tithiNum - 1) * 1.01 + 360) % 360;
   const monthIdx = Math.floor(sunLonAtNewMoon / 30) % 12;
@@ -545,6 +552,8 @@ export function getTeluguPanchangamForDate(date: Date, lat: number = 28.6139, ln
     tithiNum,
     tithiName,
     tithiEndTime,
+    nakshatraName,
+    nakshatraEndTime,
     monthName,
     samvatsaraName,
     isAuspicious,

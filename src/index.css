@@ -1245,7 +1245,7 @@ input:checked + .switch-slider:before {
 
 .calendar-weekdays-header {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   background-color: var(--color-alabaster-dark);
   border-bottom: 1px solid var(--border-soft);
   padding: 8px 0;
@@ -1263,7 +1263,7 @@ input:checked + .switch-slider:before {
 
 .calendar-grid-cells {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   grid-auto-rows: 1fr;
 }
 
@@ -1285,7 +1285,8 @@ input:checked + .switch-slider:before {
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
+  align-items: center;
   padding: 6px;
   border-right: 1px solid rgba(215, 211, 232, 0.3);
   border-bottom: 1px solid rgba(215, 211, 232, 0.3);
@@ -1293,13 +1294,14 @@ input:checked + .switch-slider:before {
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   aspect-ratio: 1 / 1;
+  gap: 3px;
 }
 
 .day-cell:nth-child(7n) {
   border-right: none;
 }
 
-.day-cell:nth-child(n+36) {
+.day-cell:nth-child(n+29) {
   border-bottom: none;
 }
 
@@ -1307,38 +1309,66 @@ input:checked + .switch-slider:before {
   background-color: var(--color-alabaster-dark);
 }
 
-.day-cell-top {
-  display: flex;
-  justify-content: flex-end;
-  width: 100%;
-}
-
 .day-number {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 22px; /* Reduced date number font size */
+  font-weight: 800;
   color: var(--color-charcoal);
+  line-height: 1;
+  margin-bottom: 2px;
 }
 
-.day-cell-bottom {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  gap: 4px;
-}
-
-.day-tithi {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 9px;
-  font-weight: 600;
-  color: var(--color-muted);
+/* Tithi and Nakshatra layout details */
+.day-tithi-line,
+.day-nakshatra-line {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 8px; /* Reduced tithi/nakshatra line font size */
+  line-height: 1.2;
   text-align: center;
-  line-height: 1.1;
+  width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 100%;
+}
+
+.day-tithi-bold {
+  font-weight: 800;
+  color: var(--color-charcoal);
+}
+
+.day-tithi-time {
+  font-weight: 400;
+  color: var(--color-muted);
+}
+
+.day-nakshatra-bold {
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+.day-nakshatra-time {
+  font-weight: 400;
+  color: var(--color-muted);
+}
+
+/* Moon Phase Indicators */
+.moon-phase-indicator {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.moon-phase-indicator.pournami {
+  background-color: var(--color-white);
+  border: 1.5px solid var(--color-charcoal);
+}
+
+.moon-phase-indicator.amavasya {
+  background-color: var(--color-charcoal);
+  border: 1.5px solid var(--color-charcoal);
 }
 
 .day-indicators {

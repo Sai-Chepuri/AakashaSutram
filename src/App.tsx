@@ -98,14 +98,14 @@ export default function App() {
         daysList.push({ date: d, isCurrentMonth: true });
       }
       
-      // Pad next month days to make exactly 42 cells
+      // Pad next month days to make exactly 35 cells (7 columns x 5 rows)
       let nextMonthDay = 1;
-      while (daysList.length < 42) {
+      while (daysList.length < 35) {
         const d = new Date(calendarYear, calendarMonth + 1, nextMonthDay++);
         daysList.push({ date: d, isCurrentMonth: false });
       }
     } else {
-      // Telugu Mode: calendarMonth is Telugu month index (0 to 11) for calendarYear
+      // Telugu Mode:
       const teluguMonthStart = getTeluguMonthStartDate(calendarYear, calendarMonth, selectedCity.lat, selectedCity.lng);
       const startWeekday = teluguMonthStart.getDay();
       
@@ -121,9 +121,9 @@ export default function App() {
         daysList.push({ date: d, isCurrentMonth: true });
       }
       
-      // Pad remaining days to 42 cells
+      // Pad remaining days to 35 cells
       let offset = 30;
-      while (daysList.length < 42) {
+      while (daysList.length < 35) {
         const d = new Date(teluguMonthStart.getTime() + offset * 24 * 60 * 60 * 1000);
         daysList.push({ date: d, isCurrentMonth: false });
         offset++;
@@ -751,15 +751,27 @@ export default function App() {
                         className={`day-cell ${!cell.isCurrentMonth ? 'inactive-day' : ''} ${isToday ? 'current-day' : ''} ${isSelected ? 'selected-day' : ''}`}
                         onClick={() => setSelectedCalendarDate(cell.date)}
                       >
-                        <div className="day-cell-top">
-                          <span className="day-number">{cell.date.getDate()}</span>
+                        {/* Moon phase indicators at top-left corner */}
+                        {panchang.tithiNum === 15 && <div className="moon-phase-indicator pournami" title="Pournami (Full Moon)" />}
+                        {panchang.tithiNum === 30 && <div className="moon-phase-indicator amavasya" title="Amavasya (New Moon)" />}
+
+                        <span className="day-number">{cell.date.getDate()}</span>
+                        
+                        <div className="day-tithi-line">
+                          <span className="day-tithi-bold">{tithiShort}</span>
+                          <span className="day-tithi-time">
+                            {panchang.tithiEndTime ? ` - ${formatTimeString(panchang.tithiEndTime).replace(/^0/, '')}` : ''}
+                          </span>
                         </div>
-                        <div className="day-cell-bottom">
-                          <span className="day-tithi">{tithiShort} {panchang.tithiEndTime ? `(${formatTimeString(panchang.tithiEndTime).replace(/^0/, '')})` : ''}</span>
-                          <div className="day-indicators">
-                            {panchang.isAuspicious && <div className="day-dot auspicious" />}
-                            {panchang.festival && <div className="day-dot festival" />}
-                          </div>
+                        <div className="day-nakshatra-line">
+                          <span className="day-nakshatra-bold">{panchang.nakshatraName}</span>
+                          <span className="day-nakshatra-time">
+                            {panchang.nakshatraEndTime ? ` - ${formatTimeString(panchang.nakshatraEndTime).replace(/^0/, '')}` : ''}
+                          </span>
+                        </div>
+                        <div className="day-indicators">
+                          {panchang.isAuspicious && <div className="day-dot auspicious" />}
+                          {panchang.festival && <div className="day-dot festival" />}
                         </div>
                       </div>
                     );
@@ -792,6 +804,12 @@ export default function App() {
                         <span className="panchang-label">Active Tithi:</span>
                         <span className="panchang-value">
                           {panchangDetails.tithiName} {panchangDetails.tithiEndTime ? `(ends at ${formatTimeString(panchangDetails.tithiEndTime)})` : ''}
+                        </span>
+                      </div>
+                      <div className="panchang-row">
+                        <span className="panchang-label">Active Nakshatram:</span>
+                        <span className="panchang-value">
+                          {panchangDetails.nakshatraName} {panchangDetails.nakshatraEndTime ? `(ends at ${formatTimeString(panchangDetails.nakshatraEndTime)})` : ''}
                         </span>
                       </div>
                       <div className="panchang-row">

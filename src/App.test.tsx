@@ -108,6 +108,10 @@ describe('AakashaSutram UI Integration', () => {
       expect(screen.getByText('Panchangam Calendar')).toBeDefined();
       expect(screen.getByText('Panchangam Details')).toBeDefined();
       expect(screen.getByText('Telugu Lunar Calendar Mode')).toBeDefined();
+      
+      // Verify exactly 35 day cells are rendered for the 7-column x 5-row grid
+      const dayCells = document.querySelectorAll('.day-cell');
+      expect(dayCells.length).toBe(35);
     });
   });
 });
