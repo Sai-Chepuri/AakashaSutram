@@ -1471,6 +1471,24 @@ input:checked + .switch-slider:before {
   color: var(--color-muted);
 }
 
+.details-today-btn {
+  background-color: var(--color-lavender-light);
+  color: var(--color-charcoal);
+  border: 1px solid var(--color-lavender);
+  border-radius: 12px;
+  padding: 4px 12px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.details-today-btn:hover {
+  background-color: var(--color-lavender);
+  transform: translateY(-1px);
+}
+
 .details-card-panchang {
   display: flex;
   flex-direction: column;

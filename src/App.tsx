@@ -24,7 +24,15 @@ import {
   getTeluguPanchangamForDate, 
   getTeluguMonthStartDate, 
   TELUGU_MONTHS, 
-  TELUGU_SAMVATSARAS 
+  TELUGU_SAMVATSARAS,
+  TELUGU_MONTHS_TELUGU,
+  GREGORIAN_MONTHS_TELUGU,
+  TELUGU_SAMVATSARAS_TELUGU,
+  TELUGU_WEEKDAYS_TELUGU,
+  TITHI_MAP_TELUGU,
+  NAKSHATRA_MAP_TELUGU,
+  translateToTelugu,
+  translateAbbreviation
 } from './utils/kalamCalculator';
 import type { DayCalculations, KalamPeriod } from './utils/kalamCalculator';
 import { CITIES, getTimezoneFromCoords } from './utils/cities';
@@ -62,6 +70,7 @@ export default function App() {
   const [calendarMonth, setCalendarMonth] = useState<number>(6); // Default to July
   const [isTeluguMode, setIsTeluguMode] = useState<boolean>(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date>(new Date());
+  const [isTeluguLanguage, setIsTeluguLanguage] = useState<boolean>(false);
 
   // Sync Calendar view to the selected date Str
   useEffect(() => {
@@ -149,12 +158,14 @@ export default function App() {
     setCalendarYear(newYear);
   };
   
+  /*
   const resetToToday = () => {
     const d = new Date();
     setSelectedCalendarDate(d);
     setCalendarYear(d.getFullYear());
     setCalendarMonth(d.getMonth());
   };
+  */
 
   const jumpToDetailedDay = (date: Date) => {
     const formatted = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -638,6 +649,10 @@ export default function App() {
                 </header>
 
                 <div className="calendar-nav-bar">
+                  <button className="date-nav-btn" onClick={() => incrementMonth(-1)} aria-label="Previous Month">
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+
                   <div className="calendar-selectors">
                     {/* Month Dropdown */}
                     <div className="calendar-dropdown-wrapper">
@@ -650,19 +665,27 @@ export default function App() {
                           // Gregorian Months
                           Array.from({ length: 12 }, (_, i) => {
                             const d = new Date(2026, i, 1);
+                            const label = isTeluguLanguage 
+                              ? GREGORIAN_MONTHS_TELUGU[i] 
+                              : d.toLocaleDateString('en-US', { month: 'long' });
                             return (
                               <option key={i} value={i}>
-                                {d.toLocaleDateString('en-US', { month: 'long' })}
+                                {label}
                               </option>
                             );
                           })
                         ) : (
                           // Telugu Months
-                          TELUGU_MONTHS.map((m, i) => (
-                            <option key={i} value={i}>
-                              {m}
-                            </option>
-                          ))
+                          TELUGU_MONTHS.map((m, i) => {
+                            const label = isTeluguLanguage
+                              ? TELUGU_MONTHS_TELUGU[i]
+                              : m;
+                            return (
+                              <option key={i} value={i}>
+                                {label}
+                              </option>
+                            );
+                          })
                         )}
                       </select>
                       <ChevronRight className="calendar-select-icon w-4 h-4 rotate-90" />
@@ -677,9 +700,13 @@ export default function App() {
                       >
                         {Array.from({ length: 16 }, (_, i) => {
                           const yr = 2020 + i;
+                          const idx = (yr - 2024 + 37 + 60 * 10) % 60;
+                          const samvatsaraName = isTeluguLanguage 
+                            ? TELUGU_SAMVATSARAS_TELUGU[idx] 
+                            : TELUGU_SAMVATSARAS[idx];
                           return (
                             <option key={i} value={yr}>
-                              {yr} ({TELUGU_SAMVATSARAS[(yr - 2024 + 37 + 60 * 10) % 60]})
+                              {yr} ({samvatsaraName})
                             </option>
                           );
                         })}
@@ -688,17 +715,9 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="calendar-center-nav">
-                    <button className="date-nav-btn" onClick={() => incrementMonth(-1)}>
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
-                    <button className="calendar-btn-today" onClick={resetToToday}>
-                      Today
-                    </button>
-                    <button className="date-nav-btn" onClick={() => incrementMonth(1)}>
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
+                  <button className="date-nav-btn" onClick={() => incrementMonth(1)} aria-label="Next Month">
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
                 </div>
 
                 {/* Telugu Mode Toggle Switch */}
@@ -713,18 +732,30 @@ export default function App() {
                     <span className="switch-slider"></span>
                   </label>
                 </div>
+
+                {/* Language Toggle Switch */}
+                <div className="calendar-toggle-section" style={{ marginTop: '8px' }}>
+                  <span className="calendar-toggle-label">Display in Telugu (తెలుగు)</span>
+                  <label className="switch-toggle">
+                    <input 
+                      type="checkbox"
+                      checked={isTeluguLanguage}
+                      onChange={(e) => setIsTeluguLanguage(e.target.checked)}
+                    />
+                    <span className="switch-slider"></span>
+                  </label>
+                </div>
               </div>
 
               {/* 2. Calendar Grid */}
               <div className="calendar-grid-container">
                 <div className="calendar-weekdays-header">
-                  <div className="weekday-label">Sun</div>
-                  <div className="weekday-label">Mon</div>
-                  <div className="weekday-label">Tue</div>
-                  <div className="weekday-label">Wed</div>
-                  <div className="weekday-label">Thu</div>
-                  <div className="weekday-label">Fri</div>
-                  <div className="weekday-label">Sat</div>
+                  {(!isTeluguLanguage 
+                    ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+                    : TELUGU_WEEKDAYS_TELUGU
+                  ).map((w, idx) => (
+                    <div key={idx} className="weekday-label">{w}</div>
+                  ))}
                 </div>
 
                 <div className="calendar-grid-cells">
@@ -745,6 +776,9 @@ export default function App() {
                     if (tithiShort.includes("Suddha ")) tithiShort = tithiShort.replace("Suddha ", "S-");
                     if (tithiShort.includes("Bahula ")) tithiShort = tithiShort.replace("Bahula ", "B-");
 
+                    const displayTithi = isTeluguLanguage ? translateAbbreviation(tithiShort) : tithiShort;
+                    const displayNakshatra = isTeluguLanguage ? (NAKSHATRA_MAP_TELUGU[panchang.nakshatraName] || panchang.nakshatraName) : panchang.nakshatraName;
+
                     return (
                       <div 
                         key={idx}
@@ -758,13 +792,13 @@ export default function App() {
                         <span className="day-number">{cell.date.getDate()}</span>
                         
                         <div className="day-tithi-line">
-                          <span className="day-tithi-bold">{tithiShort}</span>
+                          <span className="day-tithi-bold">{displayTithi}</span>
                           <span className="day-tithi-time">
                             {panchang.tithiEndTime ? ` - ${formatTimeString(panchang.tithiEndTime).replace(/^0/, '')}` : ''}
                           </span>
                         </div>
                         <div className="day-nakshatra-line">
-                          <span className="day-nakshatra-bold">{panchang.nakshatraName}</span>
+                          <span className="day-nakshatra-bold">{displayNakshatra}</span>
                           <span className="day-nakshatra-time">
                             {panchang.nakshatraEndTime ? ` - ${formatTimeString(panchang.nakshatraEndTime).replace(/^0/, '')}` : ''}
                           </span>
@@ -781,47 +815,82 @@ export default function App() {
               {/* 3. Detailed Card */}
               {(() => {
                 const panchangDetails = getTeluguPanchangamForDate(selectedCalendarDate, selectedCity.lat, selectedCity.lng);
+                
+                const samvatsaraIdx = TELUGU_SAMVATSARAS.indexOf(panchangDetails.samvatsaraName);
+                const displaySamvatsara = isTeluguLanguage && samvatsaraIdx !== -1 
+                  ? TELUGU_SAMVATSARAS_TELUGU[samvatsaraIdx] 
+                  : panchangDetails.samvatsaraName;
+
+                const monthIdxVal = TELUGU_MONTHS.indexOf(panchangDetails.monthName);
+                const displayMonthName = isTeluguLanguage && monthIdxVal !== -1 
+                  ? TELUGU_MONTHS_TELUGU[monthIdxVal] 
+                  : panchangDetails.monthName;
+
+                const displayTithiName = isTeluguLanguage 
+                  ? translateToTelugu(panchangDetails.tithiName) 
+                  : panchangDetails.tithiName;
+
+                const displayNakshatraName = isTeluguLanguage 
+                  ? (NAKSHATRA_MAP_TELUGU[panchangDetails.nakshatraName] || panchangDetails.nakshatraName) 
+                  : panchangDetails.nakshatraName;
+
+                const displayDateLabel = isTeluguLanguage 
+                  ? `${selectedCalendarDate.getDate()} ${GREGORIAN_MONTHS_TELUGU[selectedCalendarDate.getMonth()]}, ${selectedCalendarDate.getFullYear()}` 
+                  : selectedCalendarDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
                 return (
                   <div className="calendar-details-card">
                     <div className="details-card-header">
-                      <h3 className="details-card-title">Panchangam Details</h3>
+                      <h3 className="details-card-title">
+                        {isTeluguLanguage ? 'పంచాంగ వివరాలు' : 'Panchangam Details'}
+                      </h3>
                       <span className="details-card-date">
-                        {selectedCalendarDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                        {displayDateLabel}
                       </span>
                     </div>
                     
                     <div className="details-card-panchang">
                       <div className="panchang-row">
-                        <span className="panchang-label">Telugu Samvatsaram:</span>
-                        <span className="panchang-value">{panchangDetails.samvatsaraName}</span>
+                        <span className="panchang-label">
+                          {isTeluguLanguage ? 'తెలుగు సంవత్సరం:' : 'Telugu Samvatsaram:'}
+                        </span>
+                        <span className="panchang-value">{displaySamvatsara}</span>
                       </div>
                       <div className="panchang-row">
-                        <span className="panchang-label">Telugu Masamu:</span>
-                        <span className="panchang-value">{panchangDetails.monthName}</span>
+                        <span className="panchang-label">
+                          {isTeluguLanguage ? 'తెలుగు మాసం:' : 'Telugu Masamu:'}
+                        </span>
+                        <span className="panchang-value">{displayMonthName}</span>
                       </div>
                       <div className="panchang-row">
-                        <span className="panchang-label">Active Tithi:</span>
+                        <span className="panchang-label">
+                          {isTeluguLanguage ? 'సక్రియ తిథి:' : 'Active Tithi:'}
+                        </span>
                         <span className="panchang-value">
-                          {panchangDetails.tithiName} {panchangDetails.tithiEndTime ? `(ends at ${formatTimeString(panchangDetails.tithiEndTime)})` : ''}
+                          {displayTithiName} {panchangDetails.tithiEndTime ? (isTeluguLanguage ? ` (ముగింపు ${formatTimeString(panchangDetails.tithiEndTime)})` : ` (ends at ${formatTimeString(panchangDetails.tithiEndTime)})`) : ''}
                         </span>
                       </div>
                       <div className="panchang-row">
-                        <span className="panchang-label">Active Nakshatram:</span>
+                        <span className="panchang-label">
+                          {isTeluguLanguage ? 'సక్రియ నక్షత్రం:' : 'Active Nakshatram:'}
+                        </span>
                         <span className="panchang-value">
-                          {panchangDetails.nakshatraName} {panchangDetails.nakshatraEndTime ? `(ends at ${formatTimeString(panchangDetails.nakshatraEndTime)})` : ''}
+                          {displayNakshatraName} {panchangDetails.nakshatraEndTime ? (isTeluguLanguage ? ` (ముగింపు ${formatTimeString(panchangDetails.nakshatraEndTime)})` : ` (ends at ${formatTimeString(panchangDetails.nakshatraEndTime)})`) : ''}
                         </span>
                       </div>
                     </div>
                     
                     {panchangDetails.festival && (
                       <div className="festival-tag">
-                        🎉 Festival: {panchangDetails.festival}
+                        🎉 {isTeluguLanguage ? 'పండుగ:' : 'Festival:'} {panchangDetails.festival}
                       </div>
                     )}
                     
                     <button className="calendar-action-btn" onClick={() => jumpToDetailedDay(selectedCalendarDate)}>
                       <Compass className="w-4 h-4" />
-                      <span>View Detailed Muhurtas</span>
+                      <span>
+                        {isTeluguLanguage ? 'వివరణాత్మక ముహూర్తాలు చూడండి' : 'View Detailed Muhurtas'}
+                      </span>
                     </button>
                   </div>
                 );

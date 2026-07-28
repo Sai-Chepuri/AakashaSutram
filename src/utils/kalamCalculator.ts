@@ -604,3 +604,82 @@ export function getTeluguMonthStartDate(year: number, teluguMonthIdx: number, la
   }
   return new Date(year, 2, 21 + Math.round(teluguMonthIdx * 29.53));
 }
+
+export const TELUGU_MONTHS_TELUGU = [
+  "చైత్రము", "వైశాఖము", "జ్యేష్ఠము", "ఆషాఢము", "శ్రావణము", "భాద్రపదము",
+  "ఆశ్వయుజము", "కార్తీకము", "మార్గశిరము", "పుష్యము", "మాఘము", "ఫాల్గుణము"
+];
+
+export const GREGORIAN_MONTHS_TELUGU = [
+  "జనవరి", "ఫిబ్రవరి", "మార్చి", "ఏప్రిల్", "మే", "జూన్", 
+  "జూలై", "ఆగస్టు", "సెప్టెంబరు", "అక్టోబరు", "నవంబరు", "డిసెంబరు"
+];
+
+export const TELUGU_SAMVATSARAS_TELUGU = [
+  "ప్రభవ", "విభవ", "శుక్ల", "ప్రమోదూత", "ప్రజోత్పత్తి", "ఆంగీరస", "శ్రీముఖ", "భావ", "యువ", "ధాతృ",
+  "ఈశ్వర", "బహుధాన్య", "ప్రమాది", "విక్రమ", "వృష", "చిత్రభాను", "స్వభాను", "తారణ", "పార్థివ", "వ్యయ",
+  "సర్వజిత్తు", "సర్వధారి", "విరోధి", "వికృతి", "ఖర", "నందన", "విజయ", "జయ", "మన్మథ", "దుర్ముఖి",
+  "హేవిలంబి", "విలంబి", "వికారి", "శార్వరి", "ప్లవ", "శుభకృతు", "శోభకృతు", "క్రోధి", "విశ్వావసు", "పరాభవ",
+  "ప్లవంగ", "కార్తిక", "సౌమ్య", "సాధారణ", "విరోధికృతు", "పరీధావి", "ప్రమాదీచ", "ఆనంద", "రాక్షస", "నల",
+  "పింగళ", "కాలయుక్తి", "సిద్ధార్థి", "రౌద్రి", "దుర్మతి", "దుందుభి", "రుధిరోద్గారి", "రక్తాక్షి", "క్రోధన", "అక్షయ"
+];
+
+export const TELUGU_WEEKDAYS_TELUGU = [
+  "ఆది", "సోమ", "మంగళ", "బుధ", "గురు", "శుక్ర", "శని"
+];
+
+export const TITHI_MAP_TELUGU: Record<string, string> = {
+  "Padyami": "పాడ్యమి", "Vidiya": "విదియ", "Tadiya": "తదియ", "Chavithi": "చవితి", 
+  "Panchami": "पंचమి", "Shashti": "షష్ఠి", "Saptami": "సప్తంి", "Ashtami": "అష్టమి", 
+  "Navami": "నవమి", "Dashami": "దశమి", "Ekadasi": "ఏకాదశి", "Dwadasi": "ద్వాదశి", 
+  "Trayodasi": "త్రయోదశి", "Chaturdashi": "చతుర్దశి", "Pournami": "పౌర్ణమి", "Amavasya": "అమావాస్య"
+};
+
+export const NAKSHATRA_MAP_TELUGU: Record<string, string> = {
+  "Aswini": "అశ్విని", "Bharani": "భరణి", "Krittika": "కృత్తిక", "Rohini": "రోహిణి", 
+  "Mrigashira": "మృగశిర", "Ardra": "ఆర్ద్ర", "Punarvasu": "పునర్వసు", "Pushya": "పుష్యమి", 
+  "Ashlesha": "ఆశ్లేష", "Magha": "మఖ", "Purva Phalguni": "పుబ్బ", "Uttara Phalguni": "ఉత్తర", 
+  "Hasta": "హస్త", "Chitra": "చిత్త", "Swati": "స్వాతి", "Vishakha": "విశాఖ", 
+  "Anuradha": "అనూరాధ", "Jyeshta": "జ్యేష్ఠ", "Mula": "మూల", "Purvashadha": "పూర్వాషాఢ", 
+  "Uttarashadha": "ఉత్తరాషాఢ", "Shravana": "శ్రవణం", "Dhanishta": "ధనిష్ఠ", 
+  "Shatabhisha": "శతభిషం", "Purva Bhadrapada": "పూర్వాభాద్ర", "Uttara Bhadrapada": "ఉత్తరాభాద్ర", 
+  "Revati": "రేవతి"
+};
+
+export function translateToTelugu(englishText: string): string {
+  let result = englishText;
+  if (result.includes("Suddha ")) {
+    result = result.replace("Suddha ", "శుద్ధ ");
+  }
+  if (result.includes("Bahula ")) {
+    result = result.replace("Bahula ", "బహుళ ");
+  }
+  
+  const words = result.split(" ");
+  const translatedWords = words.map(w => {
+    if (TITHI_MAP_TELUGU[w]) return TITHI_MAP_TELUGU[w];
+    if (NAKSHATRA_MAP_TELUGU[w]) return NAKSHATRA_MAP_TELUGU[w];
+    return w;
+  });
+  
+  return translatedWords.join(" ");
+}
+
+export function translateAbbreviation(abbr: string): string {
+  let result = abbr;
+  if (result.startsWith("S-")) {
+    result = result.replace("S-", "శు-");
+  }
+  if (result.startsWith("B-")) {
+    result = result.replace("B-", "బ-");
+  }
+  
+  const tithiPart = result.substring(2);
+  if (TITHI_MAP_TELUGU[tithiPart]) {
+    return result.substring(0, 2) + TITHI_MAP_TELUGU[tithiPart];
+  }
+  if (TITHI_MAP_TELUGU[result]) {
+    return TITHI_MAP_TELUGU[result];
+  }
+  return result;
+}
