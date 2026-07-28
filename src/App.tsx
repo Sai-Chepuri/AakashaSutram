@@ -770,7 +770,6 @@ export default function App() {
                           </span>
                         </div>
                         <div className="day-indicators">
-                          {panchang.isAuspicious && <div className="day-dot auspicious" />}
                           {panchang.festival && <div className="day-dot festival" />}
                         </div>
                       </div>
@@ -810,12 +809,6 @@ export default function App() {
                         <span className="panchang-label">Active Nakshatram:</span>
                         <span className="panchang-value">
                           {panchangDetails.nakshatraName} {panchangDetails.nakshatraEndTime ? `(ends at ${formatTimeString(panchangDetails.nakshatraEndTime)})` : ''}
-                        </span>
-                      </div>
-                      <div className="panchang-row">
-                        <span className="panchang-label">Day Status:</span>
-                        <span className="panchang-value" style={{ color: panchangDetails.isAuspicious ? 'var(--color-sage)' : 'var(--color-charcoal)', fontWeight: 700 }}>
-                          {panchangDetails.isAuspicious ? 'Spiritual / Auspicious' : 'Regular'}
                         </span>
                       </div>
                     </div>

@@ -525,8 +525,8 @@ export function getTeluguPanchangamForDate(date: Date, lat: number = 28.6139, ln
   const nakshatraEndTime = nakshatraRange.endTime;
 
   // Calculate Month
-  const sunLonAtNewMoon = (sunLon - (tithiNum - 1) * 1.01 + 360) % 360;
-  const monthIdx = Math.floor(sunLonAtNewMoon / 30) % 12;
+  const sunLonAtNewMoon = (sunLon - (diff * 0.0808) + 360) % 360;
+  const monthIdx = (Math.floor(sunLonAtNewMoon / 30) + 1) % 12;
   const monthName = TELUGU_MONTHS[monthIdx];
 
   // Calculate Samvatsara
