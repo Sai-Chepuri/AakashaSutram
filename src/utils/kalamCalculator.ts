@@ -630,7 +630,7 @@ export const TELUGU_WEEKDAYS_TELUGU = [
 
 export const TITHI_MAP_TELUGU: Record<string, string> = {
   "Padyami": "పాడ్యమి", "Vidiya": "విదియ", "Tadiya": "తదియ", "Chavithi": "చవితి", 
-  "Panchami": "पंचమి", "Shashti": "షష్ఠి", "Saptami": "సప్తంి", "Ashtami": "అష్టమి", 
+  "Panchami": "పంచమి", "Shashti": "షష్ఠి", "Saptami": "సప్తమి", "Ashtami": "అష్టమి", 
   "Navami": "నవమి", "Dashami": "దశమి", "Ekadasi": "ఏకాదశి", "Dwadasi": "ద్వాదశి", 
   "Trayodasi": "త్రయోదశి", "Chaturdashi": "చతుర్దశి", "Pournami": "పౌర్ణమి", "Amavasya": "అమావాస్య"
 };

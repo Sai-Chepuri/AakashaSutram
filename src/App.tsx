@@ -29,8 +29,6 @@ import {
   GREGORIAN_MONTHS_TELUGU,
   TELUGU_SAMVATSARAS_TELUGU,
   TELUGU_WEEKDAYS_TELUGU,
-  TITHI_MAP_TELUGU,
-  NAKSHATRA_MAP_TELUGU,
   translateToTelugu,
   translateAbbreviation
 } from './utils/kalamCalculator';
@@ -698,8 +696,8 @@ export default function App() {
                         value={calendarYear}
                         onChange={(e) => setCalendarYear(Number(e.target.value))}
                       >
-                        {Array.from({ length: 16 }, (_, i) => {
-                          const yr = 2020 + i;
+                        {Array.from({ length: 60 }, (_, i) => {
+                          const yr = 1996 + i;
                           const idx = (yr - 2024 + 37 + 60 * 10) % 60;
                           const samvatsaraName = isTeluguLanguage 
                             ? TELUGU_SAMVATSARAS_TELUGU[idx] 
