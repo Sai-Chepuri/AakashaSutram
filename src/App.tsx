@@ -29,6 +29,7 @@ import {
   GREGORIAN_MONTHS_TELUGU,
   TELUGU_SAMVATSARAS_TELUGU,
   TELUGU_WEEKDAYS_TELUGU,
+  NAKSHATRA_MAP_TELUGU,
   translateToTelugu,
   translateAbbreviation
 } from './utils/kalamCalculator';
