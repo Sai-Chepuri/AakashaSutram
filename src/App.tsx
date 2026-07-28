@@ -77,10 +77,23 @@ export default function App() {
       const [y, m, d] = selectedDateStr.split('-').map(Number);
       const targetDate = new Date(y, m - 1, d);
       setSelectedCalendarDate(targetDate);
-      setCalendarYear(y);
-      setCalendarMonth(m - 1);
     }
   }, [selectedDateStr]);
+
+  // Keep dropdown selectors (month & year) in perfect sync with selectedCalendarDate
+  useEffect(() => {
+    if (!isTeluguMode) {
+      setCalendarMonth(selectedCalendarDate.getMonth());
+      setCalendarYear(selectedCalendarDate.getFullYear());
+    } else {
+      const panchang = getTeluguPanchangamForDate(selectedCalendarDate, selectedCity.lat, selectedCity.lng);
+      const telIdx = TELUGU_MONTHS.indexOf(panchang.monthName);
+      if (telIdx !== -1) {
+        setCalendarMonth(telIdx);
+      }
+      setCalendarYear(selectedCalendarDate.getFullYear());
+    }
+  }, [selectedCalendarDate, isTeluguMode, selectedCity.lat, selectedCity.lng]);
 
   const getDaysForGrid = () => {
     const daysList: { date: Date; isCurrentMonth: boolean }[] = [];
@@ -153,8 +166,12 @@ export default function App() {
       newYear += 1;
     }
     
-    setCalendarMonth(newMonth);
-    setCalendarYear(newYear);
+    if (!isTeluguMode) {
+      setSelectedCalendarDate(new Date(newYear, newMonth, 1));
+    } else {
+      const start = getTeluguMonthStartDate(newYear, newMonth, selectedCity.lat, selectedCity.lng);
+      setSelectedCalendarDate(start);
+    }
   };
   
   /*
@@ -658,7 +675,15 @@ export default function App() {
                       <select 
                         className="calendar-select"
                         value={calendarMonth}
-                        onChange={(e) => setCalendarMonth(Number(e.target.value))}
+                        onChange={(e) => {
+                          const newMonth = Number(e.target.value);
+                          if (!isTeluguMode) {
+                            setSelectedCalendarDate(new Date(calendarYear, newMonth, 1));
+                          } else {
+                            const start = getTeluguMonthStartDate(calendarYear, newMonth, selectedCity.lat, selectedCity.lng);
+                            setSelectedCalendarDate(start);
+                          }
+                        }}
                       >
                         {!isTeluguMode ? (
                           // Gregorian Months
@@ -695,7 +720,15 @@ export default function App() {
                       <select
                         className="calendar-select"
                         value={calendarYear}
-                        onChange={(e) => setCalendarYear(Number(e.target.value))}
+                        onChange={(e) => {
+                          const newYear = Number(e.target.value);
+                          if (!isTeluguMode) {
+                            setSelectedCalendarDate(new Date(newYear, calendarMonth, 1));
+                          } else {
+                            const start = getTeluguMonthStartDate(newYear, calendarMonth, selectedCity.lat, selectedCity.lng);
+                            setSelectedCalendarDate(start);
+                          }
+                        }}
                       >
                         {Array.from({ length: 60 }, (_, i) => {
                           const yr = 1996 + i;

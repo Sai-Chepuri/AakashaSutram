@@ -562,10 +562,10 @@ export function getTeluguPanchangamForDate(date: Date, lat: number = 28.6139, ln
 }
 
 export function getTeluguMonthStartDate(year: number, teluguMonthIdx: number, lat: number = 28.6139, lng: number = 77.2090): Date {
-  const searchStart = new Date(year, 2, 1, 12, 0, 0); // March 1st
+  const searchStart = new Date(year, 0, 1, 12, 0, 0); // Start scan from Jan 1st of target year
   const obs = new Observer(lat, lng, 0);
 
-  const getDiff = (d: Date) => {
+  const getDiffAndSunLon = (d: Date) => {
     const eqMoon = Equator(Body.Moon, d, obs, true, true);
     const eqSun = Equator(Body.Sun, d, obs, true, true);
 
@@ -583,25 +583,29 @@ export function getTeluguMonthStartDate(year: number, teluguMonthIdx: number, la
 
     const mL = getLon(eqMoon, d);
     const sL = getLon(eqSun, d);
-    return (mL - sL + 360) % 360;
+    return {
+      diff: (mL - sL + 360) % 360,
+      sunLon: sL
+    };
   };
 
-  const newMoons: Date[] = [];
+  const targetZodiac = (teluguMonthIdx + 11) % 12; // 0 (Chaitramu) -> 11 (Pisces), 1 (Vaishakhamu) -> 0 (Aries), etc.
   
-  let prevDiff = getDiff(searchStart);
-  for (let day = 1; day < 370; day++) {
+  let prevDiff = getDiffAndSunLon(searchStart).diff;
+  for (let day = 1; day < 380; day++) {
     const checkDate = new Date(searchStart.getTime() + day * 24 * 60 * 60 * 1000);
-    const currDiff = getDiff(checkDate);
+    const { diff: currDiff, sunLon } = getDiffAndSunLon(checkDate);
 
     if (currDiff < prevDiff && prevDiff > 340 && currDiff < 20) {
-      newMoons.push(new Date(checkDate));
+      const zodiac = Math.floor(sunLon / 30) % 12;
+      if (zodiac === targetZodiac) {
+        return new Date(checkDate);
+      }
     }
     prevDiff = currDiff;
   }
 
-  if (newMoons[teluguMonthIdx]) {
-    return newMoons[teluguMonthIdx];
-  }
+  // Fallback formula if not resolved in scan
   return new Date(year, 2, 21 + Math.round(teluguMonthIdx * 29.53));
 }
 
